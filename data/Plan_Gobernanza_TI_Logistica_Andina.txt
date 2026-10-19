@@ -1,0 +1,23 @@
+LOGISTICA Y CARGA ANDINA S.A.S. - DIAGNOSTICO DE GOBERNANZA DE TI
+Sector: Transporte y Cadena de Suministro | Fecha: Octubre 2026
+
+RESUMEN EJECUTIVO:
+Compania lider en distribucion de carga con mas de 400 vehiculos monitoreados y 5 centros de distribucion logisticos.
+Presenta una tasa de crecimiento del 30% anual en comercio electronico que requiere fortalecer su gestion de TI.
+
+PROBLEMAS IDENTIFICADOS:
+- Desalineacion y falta de gobernanza: La empresa carece de un Comite Directivo de Gobernanza de TI formal. Las inversiones se realizan de manera reactiva sin calculo de retorno financiero (ROI).
+- Fallas constantes por cambios no controlados: Caidas del software de monitoreo GPS debido a cambios aplicados en produccion sin aprobacion del comite CAB.
+- Problemas con proveedores tecnologicos: El proveedor del sistema de almacenes (WMS) no tiene acuerdos de nivel de servicio (SLAs) formalizados, provocando retrasos en despachos.
+- Inadecuado control de inventario de activos y software sin licencias centralizadas.
+
+NECESIDADES PRIORITARIAS:
+1. La organizacion requiere conformar el Comite de Gobernanza de TI con participacion de la gerencia general.
+2. Se necesita estandarizar el proceso de gestion de cambios (CAB) antes de cualquier paso a produccion.
+3. Se debe renegociar los contratos de proveedores de tecnologia incluyendo SLAs obligatorios.
+4. Es prioritario levantar el inventario de hardware y licencias para evitar sanciones legales.
+
+OPORTUNIDADES DE OPTIMIZACION:
+- Optimizar la cadena de suministro habilitando un portal web de autogestion para clientes corporativos.
+- Automatizar el ruteo de camiones mediante analitica avanzada de datos de telemetria para ahorro de combustible.
+- Beneficio estimado: Reduccion del 25% en tiempos de espera en muelles logisticos.

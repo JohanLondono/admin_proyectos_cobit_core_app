@@ -1,0 +1,23 @@
+HOSPITAL UNIVERSITARIO SAN RAFAEL E.S.E. - INFORME DE AUDITORIA DE TI
+Sector: Salud y Asistencia Medica | Fecha: Octubre 2026
+
+RESUMEN EJECUTIVO:
+El Hospital San Rafael atiende a mas de 250,000 pacientes y custodia historias clinicas electronicas con datos sensibles de salud.
+La auditoria evaluo la seguridad de la informacion, procedimientos de copias de seguridad (backup), gestion de incidentes y cumplimiento regulatorio.
+
+PROBLEMAS Y DEFICIENCIAS DETECTADAS:
+- Problema critico en ciberseguridad e identidades: La entidad carece de autenticacion multifactor (MFA) en los correos y accesos remotos VPN, generando alto riesgo de ransomware y robo de datos de pacientes.
+- Fallas en copias de seguridad (backup): Las copias de respaldo de la base de datos clinica no tienen pruebas de restauracion y no existe sitio alterno.
+- Ausencia de plan de continuidad (DRP): No existe un plan de contingencia ante caidas de sistemas en salas de urgencias y cirugia.
+- Tiempos de retraso en la mesa de ayuda: Retrasos del 45% en la resolucion de incidentes de red que afectan la dispensacion de medicamentos.
+
+NECESIDADES PRIORITARIAS:
+1. Se requiere formalizar e implementar la politica de seguridad de la informacion (SGSI) alineada a COBIT APO13 y DSS05.
+2. La entidad necesita establecer acuerdos de nivel de servicio (SLA) con el proveedor de software clinico para tiempos de respuesta.
+3. Se debe ejecutar simulacros de recuperacion de backups para garantizar la continuidad operativa.
+4. Es fundamental capacitar al personal medico en prevencion de ciberamenazas y phishing.
+
+OPORTUNIDADES DE MEJORA:
+- Oportunidad de modernizar copias de seguridad en la nube con almacenamiento inmutable contra malware.
+- Automatizar el monitoreo de seguridad perimetral mediante alertas tempranas.
+- Potencial de mejora en el Service Desk con herramientas de autoservicio de contrasenas para medicos de turno.
