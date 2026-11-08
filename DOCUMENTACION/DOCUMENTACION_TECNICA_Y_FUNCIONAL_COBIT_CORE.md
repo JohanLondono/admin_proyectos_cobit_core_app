@@ -899,21 +899,21 @@ El motor de extracción documental procesa el texto en 3 fases:
 4. El navegador web se abrirá automáticamente en:
    `http://localhost:8501`
 
-### 7.3. Matriz de Usuarios y Credenciales
-El sistema cuenta con 3 usuarios sembrados automáticamente en SQLite listos para pruebas:
+### 7.3. Matriz de Usuarios, Credenciales y Control de Acceso (RBAC)
+El sistema cuenta con 3 perfiles sembrados automáticamente en SQLite con control de acceso estricto en el enrutador (`ROLE_NAV_ITEMS` en `app.py`):
 
-| Perfil | Nombre Completo | Usuario | Contraseña | Permisos y Propósito |
-| :--- | :--- | :--- | :--- | :--- |
-| **Superadministrador** | Administrador del Sistema | `admin` | `admin123` | Control total del sistema y gestión de configuración. |
-| **Consultor Líder** | Ing. Johan Londoño | `consultor` | `cobit2019` | Evaluación de empresas, carga de evidencias, diagnóstico y hojas de ruta. |
-| **Cliente CIO** | Dra. Carolina Ríos | `cliente` | `cliente2019` | Visualización ejecutiva del dashboard, estado de madurez y descarga de informes. |
+| Perfil | Nombre Completo | Usuario | Contraseña | Vistas Permitidas (Menú) | Permisos y Limitaciones |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Superadministrador** | Administrador del Sistema | `admin` | `admin123` | **8 módulos** (Todos) | Control total del sistema, administración de clientes y eliminación corporativa. |
+| **Consultor Líder** | Ing. Johan Londoño | `consultor` | `cobit2019` | **7 módulos** (Dashboard, Catálogo, Evaluación, Diagnóstico, Roadmap, Ingesta, Reportes) | Ejecución técnica completa, calibración de madurez, diagnóstico por IA, formulación de hoja de ruta y reportes. Oculta el módulo administrativo de Clientes. |
+| **Cliente CIO** | Dra. Carolina Ríos | `cliente` | `cliente2019` | **4 módulos** (Dashboard, Catálogo, Roadmap, Reportes) | Visualización ejecutiva de consulta. Selector de empresa fijado a su organización (*Acceso Directivo Autorizado*), y botones de regeneración o edición destructiva deshabilitados. |
 
-*Nota: La base de datos incluye una empresa de prueba completamente cargada (**Financiera del Café S.A.**) con 40 procesos calificados, hoja de ruta calculada y contactos para poder probar los gráficos y reportes sin requerir entrada previa de datos.*
+*Nota: La base de datos incluye una empresa de prueba completamente cargada con 40 procesos calificados, hoja de ruta calculada y contactos para poder probar los gráficos y reportes sin requerir entrada previa de datos.*
 
 ---
 
 ### 7.4. Ejecución de la Batería de Pruebas Automatizadas
-Para verificar la integridad de todos los motores, cálculos matemáticos, base de datos y exportadores sin necesidad de abrir el navegador:
+Para verificar la integridad de todos los motores, cálculos matemáticos, base de datos, enrutamiento RBAC y exportadores sin necesidad de abrir el navegador:
 
 ```powershell
 python test_cobit_core.py
@@ -928,14 +928,16 @@ python test_cobit_core.py
 [1/6] Probando inicialización de SQLite y datos semilla...
   -> Autenticación de admin: OK
   -> Autenticación de consultor: OK
-  -> Cliente semilla encontrado: Financiera del Café S.A. (NIT: 900.548.123-4) - OK
+  -> Autenticación de cliente: OK
+  -> Matriz de permisos RBAC (Admin: 8, Consultor: 7, Cliente: 4): OK
+  -> Cliente de prueba: Ejemplo 1 (NIT: 1019.2029.1111) - OK
 
 [2/6] Probando Catálogo COBIT 2019...
   -> 5 Dominios y 40 Procesos oficiales validados: OK
 
 [3/6] Probando Motor de Madurez y Algoritmo IMO [COB-TK08]...
-  -> IMO calculado: 2.02 / 5.00 (Gestionado) - OK
-  -> Salud de Gobernanza: 40.4% | Riesgo: 59.6% - OK
+  -> IMO calculado: 1.00 / 5.00 (Inicial) - OK
+  -> Salud de Gobernanza: 20.0% | Riesgo: 80.0% - OK
 
 [4/6] Probando Motor de IA y Alineación Estratégica [COB-ST09, COB-ST12, COB-ST13]...
   -> Alineación generada: 3 procesos recomendados - OK
@@ -943,12 +945,12 @@ python test_cobit_core.py
   -> Diagnóstico cualitativo y matriz de riesgos generada: OK
 
 [5/6] Probando Generador de Hoja de Ruta [COB-TK10, COB-ST14]...
-  -> Roadmap generado: 40 iniciativas (16 Quick Wins) - OK
+  -> Roadmap generado: 40 iniciativas (9 Quick Wins) - OK
   -> Presupuesto Total: $532,000,000 COP - OK
 
 [6/6] Probando Exportación de Reportes [COB-ST19, COB-ST20]...
-  -> Informe Ejecutivo en PDF generado (4387 bytes): OK
-  -> Libro de Evaluación Excel generado (10442 bytes): OK
+  -> Informe Ejecutivo en PDF generado (4276 bytes): OK
+  -> Libro de Evaluación Excel generado (8766 bytes): OK
 
 ==================================================================
   >>> TODAS LAS PRUEBAS (6/6) PASARON SATISFACTORIAMENTE AL 100% <<<

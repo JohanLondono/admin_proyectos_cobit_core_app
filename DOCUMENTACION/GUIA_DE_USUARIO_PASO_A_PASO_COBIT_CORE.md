@@ -37,31 +37,37 @@ Se abrirá de inmediato una pestaña en tu navegador web en la dirección: `http
 ### 2. Pantalla de Inicio de Sesión
 Verás una tarjeta azul oscura con el título **COBIT 2019 Core Consulting**. 
 
-El sistema cuenta con tres tipos de usuarios listos para usar:
+El sistema cuenta con tres tipos de perfiles con **Control de Acceso Basado en Roles (RBAC)** estricto:
 
-| Si quieres entrar como... | Usuario | Contraseña | ¿Qué podrás hacer? |
-| :--- | :--- | :--- | :--- |
-| **👑 Administrador** | `admin` | `admin123` | Acceso a todo el sistema y configuración general. |
-| **💼 Consultor Líder** *(Recomendado)* | `consultor` | `cobit2019` | Crear clientes, realizar evaluaciones, usar la IA y generar hojas de ruta. |
-| **🏢 Cliente (CIO / Gerente)** | `cliente` | `cliente2019` | Ver el dashboard, consultar resultados y descargar informes de su empresa. |
+| Rol | Usuario | Contraseña | Módulos Visibles en Menú | Permisos y Limitaciones |
+| :--- | :--- | :--- | :--- | :--- |
+| **👑 Administrador** | `admin` | `admin123` | **8 módulos** (Todos) | Acceso total al sistema, configuración global y eliminación de empresas. |
+| **💼 Consultor Líder** *(Recomendado)* | `consultor` | `cobit2019` | **7 módulos** (Dashboard, Catálogo, Evaluación, Diagnóstico, Roadmap, Ingesta, Reportes) | Ejecuta evaluaciones, diagnósticos de IA, genera hojas de ruta y exporta informes técnicos. La gestión administrativa de clientes no se muestra en su menú. |
+| **🏢 Cliente (CIO / Gerente)** | `cliente` | `cliente2019` | **4 módulos** (Dashboard, Catálogo, Hoja de Ruta, Reportes) | Vista ejecutiva de consulta. El selector de empresa queda bloqueado a su organización (*Acceso Directivo Autorizado*), y los botones de regeneración de planes quedan ocultos. |
 
-> 💡 **Consejo:** Para realizar todo el recorrido de consultoría, ingresa con el usuario **`consultor`** y la contraseña **`cobit2019`**.
+> 💡 **Consejo:** Para realizar todo el recorrido de consultoría técnica completa, ingresa con el usuario **`consultor`** y la contraseña **`cobit2019`**. Para labores de administración o eliminación, ingresa como **`admin`**.
 
 ---
 
-## 🧭 CÓMO MOVERSE POR EL SISTEMA (EL MENÚ LATERAL)
+## 🧭 CÓMO MOVERSE POR EL SISTEMA (EL MENÚ LATERAL Y RBAC)
 
-A la izquierda de tu pantalla siempre tendrás una barra lateral (Sidebar) con el menú principal:
+A la izquierda de tu pantalla siempre tendrás una barra lateral (Sidebar). El sistema adapta dinámicamente las secciones mostradas según el rol autenticado:
 
-- 📊 **Dashboard Principal:** La pantalla de control con los gráficos y los puntajes globales.
-- 🏢 **Gestión de Clientes:** Donde registras las empresas y a sus directivos de contacto.
-- 📖 **Catálogo COBIT 2019:** Tu enciclopedia interactiva con los 40 procesos oficiales explicados.
-- 📝 **Evaluación de Madurez:** El cuestionario donde calificas los procesos del 0 al 5.
-- 🤖 **Diagnóstico e IA:** El asistente inteligente que analiza brechas y redacta hallazgos.
-- 🗺️ **Hoja de Ruta (Roadmap):** El plan de proyectos por fases con fechas y presupuestos.
-- 📄 **Ingesta Documental (NLP):** Donde subes políticas o auditorías para que la IA extraiga problemas automáticamente.
-- 📥 **Reportes y Descargas:** Donde descargas el PDF y el Excel con un solo clic.
-- 🚪 **Cerrar Sesión:** Para salir del sistema de forma segura.
+### Tarjeta de Perfil en la Barra Lateral
+En la parte superior del menú siempre se muestra la tarjeta de identidad con:
+- Nombre y apellido del usuario activo.
+- Badge con el nombre del Rol (`ADMINISTRADOR`, `CONSULTOR`, `CLIENTE`).
+- Botón rojo **"Cerrar Sesión"**.
+
+### Matriz de Módulos según Perfil
+- 📊 **Dashboard Principal:** Disponible para **Admin**, **Consultor** y **Cliente**. (Para Cliente está fijado a su propia compañía).
+- 🏢 **Gestión de Clientes:** Exclusivo para **Admin**. (Permite altas, bajas y directorio corporativo).
+- 📖 **Catálogo COBIT 2019:** Disponible para **Admin**, **Consultor** y **Cliente**.
+- 📝 **Evaluación de Madurez:** Disponible para **Admin** y **Consultor**.
+- 🤖 **Diagnóstico e IA:** Disponible para **Admin** y **Consultor**.
+- 🗺️ **Hoja de Ruta (Roadmap):** Disponible para **Admin**, **Consultor** y **Cliente** (Clientes en modo lectura).
+- 📄 **Ingesta Documental (NLP):** Disponible para **Admin** y **Consultor**.
+- 📥 **Reportes y Descargas:** Disponible para **Admin**, **Consultor** y **Cliente**.
 
 ---
 

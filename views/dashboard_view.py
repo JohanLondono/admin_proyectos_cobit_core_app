@@ -88,17 +88,27 @@ def show_dashboard():
     if st.session_state.get("active_client_id") in client_ids:
         current_idx = client_ids.index(st.session_state["active_client_id"])
 
+    # Validar rol de usuario para restringir cambio de empresa en clientes corporativos
+    user = st.session_state.get("user") or {}
+    user_role = user.get("role", "consultant")
+
     col_sel1, col_sel2 = st.columns([2, 2])
     with col_sel1:
-        selected_client_idx = st.selectbox(
-            "🏢 Selecciona la Empresa Cliente:",
-            range(len(clients)),
-            format_func=lambda i: client_names[i],
-            index=current_idx,
-            key="dash_client_select"
-        )
-        active_client = clients[selected_client_idx]
-        st.session_state["active_client_id"] = active_client["id"]
+        if user_role == "client":
+            active_client = clients[current_idx]
+            st.session_state["active_client_id"] = active_client["id"]
+            st.markdown("**🏢 Empresa Cliente:**")
+            st.markdown(f"<div style='background:#F1F5F9; border-left:4px solid #059669; padding:8px 12px; border-radius:6px; font-weight:700; color:#0F172A; margin-top:4px;'>{active_client['name']} <span style='font-size:0.75rem; color:#059669; font-weight:600;'>(Acceso Directivo Autorizado)</span></div>", unsafe_allow_html=True)
+        else:
+            selected_client_idx = st.selectbox(
+                "🏢 Selecciona la Empresa Cliente:",
+                range(len(clients)),
+                format_func=lambda i: client_names[i],
+                index=current_idx,
+                key="dash_client_select"
+            )
+            active_client = clients[selected_client_idx]
+            st.session_state["active_client_id"] = active_client["id"]
 
     # Evaluaciones del cliente
     assessments = get_assessments_by_client(active_client["id"])

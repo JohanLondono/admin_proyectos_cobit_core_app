@@ -26,9 +26,18 @@ def show_roadmap():
     if st.session_state.get("active_client_id") in client_ids:
         curr_c_idx = client_ids.index(st.session_state["active_client_id"])
 
-    selected_c_idx = st.selectbox("Empresa Cliente:", range(len(clients)), format_func=lambda i: client_names[i], index=curr_c_idx, key="road_client_picker")
-    active_client = clients[selected_c_idx]
-    st.session_state["active_client_id"] = active_client["id"]
+    # Validar rol de usuario para restringir cambio de empresa y regeneración en clientes corporativos
+    user = st.session_state.get("user") or {}
+    user_role = user.get("role", "consultant")
+
+    if user_role == "client":
+        active_client = clients[curr_c_idx]
+        st.session_state["active_client_id"] = active_client["id"]
+        st.markdown(f"<div style='background:#F1F5F9; border-left:4px solid #059669; padding:8px 12px; border-radius:6px; font-weight:700; color:#0F172A; margin: 8px 0 16px 0;'>🏢 Empresa Cliente: {active_client['name']} <span style='font-size:0.75rem; color:#059669; font-weight:600;'>(Visualización de Plan Estratégico Aprobado)</span></div>", unsafe_allow_html=True)
+    else:
+        selected_c_idx = st.selectbox("Empresa Cliente:", range(len(clients)), format_func=lambda i: client_names[i], index=curr_c_idx, key="road_client_picker")
+        active_client = clients[selected_c_idx]
+        st.session_state["active_client_id"] = active_client["id"]
 
     assessments = get_assessments_by_client(active_client["id"])
     if not assessments:
@@ -41,36 +50,43 @@ def show_roadmap():
     # Consultar si ya existe un roadmap guardado
     existing_roadmap = get_roadmap_by_assessment(active_eval["id"])
 
-    col_btn1, col_btn2 = st.columns([3, 1])
-    with col_btn2:
-        if st.button("⚡ Regenerar Hoja de Ruta", help="Genera un plan optimizado usando el algoritmo multi-criterio COBIT"):
-            new_plan = generate_roadmap_plan(scores, active_client["name"])
-            save_roadmap(
-                assessment_id=active_eval["id"],
-                client_id=active_client["id"],
-                title=new_plan["title"],
-                total_budget=new_plan["total_budget"],
-                horizon_months=new_plan["horizon_months"],
-                summary=new_plan["summary"],
-                initiatives=new_plan["initiatives"]
-            )
-            st.success("¡Hoja de ruta regenerada con éxito!")
-            st.rerun()
+    # Acciones de regeneración (solo para Administrador y Consultor Líder)
+    if user_role in ["admin", "consultant"]:
+        col_btn1, col_btn2 = st.columns([3, 1])
+        with col_btn2:
+            if st.button("⚡ Regenerar Hoja de Ruta", help="Genera un plan optimizado usando el algoritmo multi-criterio COBIT"):
+                new_plan = generate_roadmap_plan(scores, active_client["name"])
+                save_roadmap(
+                    assessment_id=active_eval["id"],
+                    client_id=active_client["id"],
+                    title=new_plan["title"],
+                    total_budget=new_plan["total_budget"],
+                    horizon_months=new_plan["horizon_months"],
+                    summary=new_plan["summary"],
+                    initiatives=new_plan["initiatives"]
+                )
+                st.success("¡Hoja de ruta regenerada con éxito!")
+                st.rerun()
 
     if not existing_roadmap:
-        st.info("Aún no se ha generado una hoja de ruta para esta evaluación. Haz clic en 'Generar Hoja de Ruta'.")
-        if st.button("🚀 Generar Hoja de Ruta Ahora", type="primary"):
-            new_plan = generate_roadmap_plan(scores, active_client["name"])
-            save_roadmap(
-                assessment_id=active_eval["id"],
-                client_id=active_client["id"],
-                title=new_plan["title"],
-                total_budget=new_plan["total_budget"],
-                horizon_months=new_plan["horizon_months"],
-                summary=new_plan["summary"],
-                initiatives=new_plan["initiatives"]
-            )
-            st.rerun()
+        if user_role in ["admin", "consultant"]:
+            st.info("Aún no se ha generado una hoja de ruta para esta evaluación. Haz clic en 'Generar Hoja de Ruta'.")
+            if st.button("🚀 Generar Hoja de Ruta Ahora", type="primary"):
+                new_plan = generate_roadmap_plan(scores, active_client["name"])
+                save_roadmap(
+                    assessment_id=active_eval["id"],
+                    client_id=active_client["id"],
+                    title=new_plan["title"],
+                    total_budget=new_plan["total_budget"],
+                    horizon_months=new_plan["horizon_months"],
+                    summary=new_plan["summary"],
+                    initiatives=new_plan["initiatives"]
+                )
+                st.success("¡Hoja de ruta generada con éxito!")
+                st.rerun()
+        else:
+            st.info("ℹ️ La hoja de ruta estratégica aún está en proceso de formulación por parte del equipo consultor.")
+            return
         return
 
     initiatives = get_roadmap_initiatives(existing_roadmap["id"])

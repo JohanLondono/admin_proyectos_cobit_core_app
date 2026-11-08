@@ -106,3 +106,14 @@ Para verificar la integridad del sistema en cualquier momento:
 python test_cobit_core.py
 ```
 Resultado: **6/6 pruebas aprobadas satisfactoriamente al 100%**.
+
+---
+
+## 📚 Documentación del Proyecto
+El proyecto cuenta con un paquete integral de documentación en la carpeta [`DOCUMENTACION/`](DOCUMENTACION/):
+1. **[EVIDENCIAS_JIRA_CRONOGRAMA_COBIT.md](DOCUMENTACION/EVIDENCIAS_JIRA_CRONOGRAMA_COBIT.md):** Manual de evidencias ítem por ítem para Jira (capturas GUI, código fuente y sustentación).
+2. **[VERIFICACION_REQUISITOS_JIRA_VS_IMPLEMENTACION.md](DOCUMENTACION/VERIFICACION_REQUISITOS_JIRA_VS_IMPLEMENTACION.md):** Matriz de trazabilidad y verificación de requisitos.
+3. **[GUIA_DE_USUARIO_PASO_A_PASO_COBIT_CORE.md](DOCUMENTACION/GUIA_DE_USUARIO_PASO_A_PASO_COBIT_CORE.md):** Manual didáctico paso a paso para usuarios y evaluadores.
+4. **[DOCUMENTACION_TECNICA_Y_FUNCIONAL_COBIT_CORE.md](DOCUMENTACION/DOCUMENTACION_TECNICA_Y_FUNCIONAL_COBIT_CORE.md):** Manual de arquitectura, esquemas de bases de datos y algoritmos.
+5. **[ANALISIS_COMPARATIVO_Y_ROADMAP_DE_MEJORAS_FUTURAS.md](DOCUMENTACION/ANALISIS_COMPARATIVO_Y_ROADMAP_DE_MEJORAS_FUTURAS.md):** Plan estratégico de evolución y escalabilidad.
+

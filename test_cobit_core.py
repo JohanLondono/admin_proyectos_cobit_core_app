@@ -32,7 +32,20 @@ def test_system():
 
     consultant = authenticate_user("consultor", "cobit2019")
     assert consultant is not None, "Error: Usuario consultor no autenticado"
+    assert consultant["role"] == "consultant", "Error: Rol de consultor incorrecto"
     print("  -> Autenticación de consultor: OK")
+
+    client_user = authenticate_user("cliente", "cliente2019")
+    assert client_user is not None, "Error: Usuario cliente no autenticado"
+    assert client_user["role"] == "client", "Error: Rol de cliente incorrecto"
+    print("  -> Autenticación de cliente: OK")
+
+    # Validar matriz de permisos RBAC [COB-ST03]
+    from app import ROLE_NAV_ITEMS
+    assert len(ROLE_NAV_ITEMS["admin"]) == 8, "Error: Admin debe tener 8 módulos"
+    assert len(ROLE_NAV_ITEMS["consultant"]) == 7, "Error: Consultor debe tener 7 módulos (sin gestión de clientes)"
+    assert len(ROLE_NAV_ITEMS["client"]) == 4, "Error: Cliente debe tener 4 módulos (dashboard, catálogo, roadmap, reportes)"
+    print("  -> Matriz de permisos RBAC (Admin: 8, Consultor: 7, Cliente: 4): OK")
 
     # Validar clientes
     clients = get_all_clients()

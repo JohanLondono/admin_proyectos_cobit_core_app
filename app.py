@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Configuración inicial de Streamlit (debe ser la primera llamada de Streamlit)
 st.set_page_config(
-    page_title="COBIT 2019 Core Consulting",
+    page_title="SmartGov COBIT",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -88,6 +88,37 @@ def show_login():
         </div>
         """, unsafe_allow_html=True)
 
+# =====================================================================
+# MATRIZ DE CONTROL DE ACCESO POR ROLES (RBAC) [COB-ST03]
+# =====================================================================
+ROLE_NAV_ITEMS = {
+    "admin": [
+        ("📊", "dashboard", "Dashboard Principal"),
+        ("🏢", "clients", "Gestión de Clientes"),
+        ("📖", "catalog", "Catálogo COBIT 2019"),
+        ("📝", "assessment", "Evaluación de Madurez"),
+        ("🤖", "diagnosis", "Diagnóstico e IA"),
+        ("🗺️", "roadmap", "Hoja de Ruta (Roadmap)"),
+        ("📄", "documents", "Ingesta Documental (NLP)"),
+        ("📥", "reports", "Reportes y Descargas")
+    ],
+    "consultant": [
+        ("📊", "dashboard", "Dashboard Principal"),
+        ("📖", "catalog", "Catálogo COBIT 2019"),
+        ("📝", "assessment", "Evaluación de Madurez"),
+        ("🤖", "diagnosis", "Diagnóstico e IA"),
+        ("🗺️", "roadmap", "Hoja de Ruta (Roadmap)"),
+        ("📄", "documents", "Ingesta Documental (NLP)"),
+        ("📥", "reports", "Reportes y Descargas")
+    ],
+    "client": [
+        ("📊", "dashboard", "Dashboard Principal"),
+        ("📖", "catalog", "Catálogo COBIT 2019"),
+        ("🗺️", "roadmap", "Hoja de Ruta (Roadmap)"),
+        ("📥", "reports", "Reportes y Descargas")
+    ]
+}
+
 # Si el usuario no está autenticado, renderizar login
 if not st.session_state["authenticated"]:
     show_login()
@@ -96,12 +127,38 @@ if not st.session_state["authenticated"]:
 # =====================================================================
 # SIDEBAR DE NAVEGACIÓN Y CONTEXTO
 # =====================================================================
-user = st.session_state["user"]
-role_label = {
-    "admin": "👑 Administrador",
-    "consultant": "💼 Consultor Líder",
-    "client": "🏢 Cliente Corporativo"
-}.get(user.get("role"), "Usuario")
+user = st.session_state.get("user") or {}
+user_role = user.get("role", "client")
+
+role_info = {
+    "admin": {
+        "label": "👑 Superadministrador",
+        "badge": "Acceso Total (8 Módulos)",
+        "color": "#1E3A8A"
+    },
+    "consultant": {
+        "label": "💼 Consultor Líder",
+        "badge": "Consultoría y Auditoría (7 Módulos)",
+        "color": "#0284C7"
+    },
+    "client": {
+        "label": "🏢 Cliente Corporativo",
+        "badge": "Consulta Directiva (4 Módulos)",
+        "color": "#059669"
+    }
+}.get(user_role, {
+    "label": "Usuario",
+    "badge": "Consulta",
+    "color": "#64748B"
+})
+
+# Obtener módulos autorizados para el rol
+nav_items = ROLE_NAV_ITEMS.get(user_role, ROLE_NAV_ITEMS["client"])
+allowed_views = [k for _, k, _ in nav_items]
+
+# Asegurar que la vista activa esté dentro de las permitidas para este rol
+if st.session_state.get("current_view") not in allowed_views:
+    st.session_state["current_view"] = allowed_views[0]
 
 with st.sidebar:
     st.markdown(f"""
@@ -113,28 +170,18 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    # Tarjeta de usuario
+    # Tarjeta de usuario con perfil y permisos visibles
     st.markdown(f"""
-    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px; margin:14px 0 18px 0;">
-        <div style="font-weight:700; font-size:0.88rem; color:#0F172A;">{user['full_name']}</div>
-        <div style="font-size:0.75rem; color:#0284C7; font-weight:600;">{role_label}</div>
+    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; margin:14px 0 18px 0;">
+        <div style="font-weight:700; font-size:0.88rem; color:#0F172A;">{user.get('full_name', 'Usuario')}</div>
+        <div style="font-size:0.75rem; color:{role_info['color']}; font-weight:700; margin-top:2px;">{role_info['label']}</div>
+        <div style="font-size:0.70rem; color:#64748B; background:#E2E8F0; border-radius:4px; padding:2px 6px; display:inline-block; margin-top:6px;">{role_info['badge']}</div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("**MENÚ PRINCIPAL**")
 
-    # Botones de navegación
-    nav_items = [
-        ("📊", "dashboard", "Dashboard Principal"),
-        ("🏢", "clients", "Gestión de Clientes"),
-        ("📖", "catalog", "Catálogo COBIT 2019"),
-        ("📝", "assessment", "Evaluación de Madurez"),
-        ("🤖", "diagnosis", "Diagnóstico e IA"),
-        ("🗺️", "roadmap", "Hoja de Ruta (Roadmap)"),
-        ("📄", "documents", "Ingesta Documental (NLP)"),
-        ("📥", "reports", "Reportes y Descargas")
-    ]
-
+    # Renderizar exclusivamente los botones autorizados para este perfil
     for icon, key, label in nav_items:
         is_current = (st.session_state["current_view"] == key)
         btn_type = "primary" if is_current else "secondary"
@@ -148,14 +195,21 @@ with st.sidebar:
     if st.button("🚪 Cerrar Sesión", use_container_width=True):
         st.session_state["authenticated"] = False
         st.session_state["user"] = None
+        st.session_state["current_view"] = "dashboard"
         st.rerun()
 
-    st.caption("Universidad del Quindío • 8vo Semestre")
+    st.caption("Universidad del Quindío • 9vo Semestre")
 
 # =====================================================================
-# ENRUTADOR DE VISTAS (ROUTER)
+# ENRUTADOR DE VISTAS (ROUTER) CON VALIDACIÓN DE PERMISOS
 # =====================================================================
 view = st.session_state["current_view"]
+
+# Verificación estricta de autorización
+if view not in allowed_views:
+    st.error(f"⛔ Acceso no autorizado: Su rol ({role_info['label']}) no tiene permisos para acceder a esta sección.")
+    st.session_state["current_view"] = allowed_views[0]
+    st.rerun()
 
 if view == "dashboard":
     from views.dashboard_view import show_dashboard
@@ -183,3 +237,4 @@ elif view == "reports":
     show_reports()
 else:
     st.error("Vista no encontrada.")
+

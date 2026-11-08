@@ -72,11 +72,13 @@ def show_clients():
                         if st.button("✏️ Editar Datos", key=f"edit_btn_{client['id']}"):
                             st.session_state[f"editing_client_{client['id']}"] = True
 
-                    with col_btn2:
-                        if st.button("🗑️ Eliminar Cliente", key=f"del_btn_{client['id']}"):
-                            delete_client(client["id"])
-                            st.warning(f"Empresa '{client['name']}' eliminada.")
-                            st.rerun()
+                    user_role = (st.session_state.get("user") or {}).get("role", "consultant")
+                    if user_role == "admin":
+                        with col_btn2:
+                            if st.button("🗑️ Eliminar Cliente", key=f"del_btn_{client['id']}"):
+                                delete_client(client["id"])
+                                st.warning(f"Empresa '{client['name']}' eliminada.")
+                                st.rerun()
 
                     # Formulario de Edición condicional
                     if st.session_state.get(f"editing_client_{client['id']}"):
