@@ -94,7 +94,7 @@ def show_diagnosis():
 
         diag = generate_heuristic_diagnosis(active_client, metrics)
         for rk in diag["risks"]:
-            color = "#DC2626" if rk["level"] == "Alto" else "#D97706"
+            color = "#EF4444" if rk["level"] == "Alto" else "#F59E0B"
             with st.container():
                 st.markdown(f"#### ⚠️ {rk['category']} — <span style='color:{color}; font-size:0.9rem;'>Riesgo {rk['level']}</span>", unsafe_allow_html=True)
                 st.markdown(f"**Descripción del Riesgo:** {rk['description']}")

@@ -80,7 +80,7 @@ def show_login():
 
         # Acceso Rápido / Demo credentials helper
         st.markdown("""
-        <div style="background:#F1F5F9; border-left:4px solid #0284C7; padding:12px 16px; border-radius:0 8px 8px 0; margin-top:16px; font-size:0.82rem; color:#334155;">
+        <div class="demo-credentials-box">
             <b>Credenciales de demostración preconfiguradas:</b><br>
             • <b>Administrador:</b> usuario <code>admin</code> / clave <code>admin123</code><br>
             • <b>Consultor Líder:</b> usuario <code>consultor</code> / clave <code>cobit2019</code><br>
@@ -134,7 +134,7 @@ role_info = {
     "admin": {
         "label": "👑 Superadministrador",
         "badge": "Acceso Total (8 Módulos)",
-        "color": "#1E3A8A"
+        "color": "#3B82F6"
     },
     "consultant": {
         "label": "💼 Consultor Líder",
@@ -144,12 +144,12 @@ role_info = {
     "client": {
         "label": "🏢 Cliente Corporativo",
         "badge": "Consulta Directiva (4 Módulos)",
-        "color": "#059669"
+        "color": "#10B981"
     }
 }.get(user_role, {
     "label": "Usuario",
     "badge": "Consulta",
-    "color": "#64748B"
+    "color": "#94A3B8"
 })
 
 # Obtener módulos autorizados para el rol
@@ -162,20 +162,20 @@ if st.session_state.get("current_view") not in allowed_views:
 
 with st.sidebar:
     st.markdown(f"""
-    <div style="padding:10px 0 16px 0; border-bottom:1px solid #E2E8F0;">
-        <div style="font-size:1.4rem; font-weight:800; color:#1E3A8A; display:flex; align-items:center; gap:8px;">
+    <div class="sidebar-brand-box">
+        <div class="sidebar-brand-title">
             <span>🏛️</span> COBIT Core
         </div>
-        <div style="font-size:0.78rem; color:#64748B;">Marco COBIT 2019 + IA</div>
+        <div class="sidebar-brand-sub">Marco COBIT 2019 + IA</div>
     </div>
     """, unsafe_allow_html=True)
 
     # Tarjeta de usuario con perfil y permisos visibles
     st.markdown(f"""
-    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; margin:14px 0 18px 0;">
-        <div style="font-weight:700; font-size:0.88rem; color:#0F172A;">{user.get('full_name', 'Usuario')}</div>
+    <div class="sidebar-user-card">
+        <div class="sidebar-user-name">{user.get('full_name', 'Usuario')}</div>
         <div style="font-size:0.75rem; color:{role_info['color']}; font-weight:700; margin-top:2px;">{role_info['label']}</div>
-        <div style="font-size:0.70rem; color:#64748B; background:#E2E8F0; border-radius:4px; padding:2px 6px; display:inline-block; margin-top:6px;">{role_info['badge']}</div>
+        <div class="sidebar-user-badge">{role_info['badge']}</div>
     </div>
     """, unsafe_allow_html=True)
 

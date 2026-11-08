@@ -33,7 +33,12 @@ def show_roadmap():
     if user_role == "client":
         active_client = clients[curr_c_idx]
         st.session_state["active_client_id"] = active_client["id"]
-        st.markdown(f"<div style='background:#F1F5F9; border-left:4px solid #059669; padding:8px 12px; border-radius:6px; font-weight:700; color:#0F172A; margin: 8px 0 16px 0;'>🏢 Empresa Cliente: {active_client['name']} <span style='font-size:0.75rem; color:#059669; font-weight:600;'>(Visualización de Plan Estratégico Aprobado)</span></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="client-banner" style="margin: 8px 0 16px 0;">
+            🏢 Empresa Cliente: {active_client['name']} 
+            <span class="client-banner-tag">(Visualización de Plan Estratégico Aprobado)</span>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         selected_c_idx = st.selectbox("Empresa Cliente:", range(len(clients)), format_func=lambda i: client_names[i], index=curr_c_idx, key="road_client_picker")
         active_client = clients[selected_c_idx]
@@ -115,12 +120,12 @@ def show_roadmap():
         for idx, qw in enumerate(quick_wins[:3]):
             with qw_cols[idx]:
                 st.markdown(f"""
-                <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px; margin-bottom:10px;">
+                <div class="qw-card">
                     <span class="badge-qw">⚡ QUICK WIN</span>
-                    <div style="font-weight:700; color:#14532D; margin-top:6px; font-size:0.95rem;">{qw['title']}</div>
-                    <div style="font-size:0.82rem; color:#166534; margin:4px 0;">{qw['description']}</div>
-                    <div style="font-size:0.8rem; color:#4B5563; margin-top:6px;"><b>Responsable:</b> {qw['responsible_role']}</div>
-                    <div style="font-size:0.8rem; color:#15803D;"><b>Inversión:</b> ${qw['estimated_cost']:,.0f} COP | <b>Tiempo:</b> {qw['estimated_months']} meses</div>
+                    <div class="qw-title">{qw['title']}</div>
+                    <div class="qw-desc">{qw['description']}</div>
+                    <div class="qw-role"><b>Responsable:</b> {qw['responsible_role']}</div>
+                    <div class="qw-meta"><b>Inversión:</b> ${qw['estimated_cost']:,.0f} COP | <b>Tiempo:</b> {qw['estimated_months']} meses</div>
                 </div>
                 """, unsafe_allow_html=True)
 

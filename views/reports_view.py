@@ -38,7 +38,12 @@ def show_reports():
             active_client = clients[curr_c_idx]
             st.session_state["active_client_id"] = active_client["id"]
             st.markdown("**Empresa Cliente:**")
-            st.markdown(f"<div style='background:#F1F5F9; border-left:4px solid #059669; padding:8px 12px; border-radius:6px; font-weight:700; color:#0F172A; margin-top:4px;'>{active_client['name']} <span style='font-size:0.75rem; color:#059669; font-weight:600;'>(Acceso Directivo Autorizado)</span></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="client-banner">
+                🏢 {active_client['name']} 
+                <span class="client-banner-tag">(Acceso Directivo Autorizado)</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             selected_c_idx = st.selectbox("Empresa Cliente:", range(len(clients)), format_func=lambda i: client_names[i], index=curr_c_idx, key="rep_client_picker")
             active_client = clients[selected_c_idx]
@@ -76,10 +81,10 @@ def show_reports():
 
     with c_pdf:
         st.markdown("""
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:20px; text-align:center;">
+        <div class="report-card">
             <div style="font-size:2.5rem;">📄</div>
-            <div style="font-weight:700; font-size:1.15rem; color:#1E3A8A; margin-top:8px;">Informe Ejecutivo en PDF</div>
-            <div style="font-size:0.85rem; color:#64748B; margin:8px 0 16px 0;">
+            <div class="report-card-title" style="color:#0284C7;">Informe Ejecutivo en PDF</div>
+            <div class="report-card-desc">
                 Documento formal con portada, ficha técnica, resumen de madurez, desglose por dominios, brechas críticas y cronograma.
             </div>
         </div>
@@ -99,10 +104,10 @@ def show_reports():
 
     with c_xlsx:
         st.markdown("""
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:20px; text-align:center;">
+        <div class="report-card">
             <div style="font-size:2.5rem;">📊</div>
-            <div style="font-weight:700; font-size:1.15rem; color:#059669; margin-top:8px;">Matriz Completa en Excel (.xlsx)</div>
-            <div style="font-size:0.85rem; color:#64748B; margin:8px 0 16px 0;">
+            <div class="report-card-title" style="color:#10B981;">Matriz Completa en Excel (.xlsx)</div>
+            <div class="report-card-desc">
                 Libro de cálculo con 3 pestañas: Resumen Ejecutivo, Calificaciones individuales de los procesos y Métricas por dominio.
             </div>
         </div>

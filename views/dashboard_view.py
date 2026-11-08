@@ -55,14 +55,25 @@ def render_radar_chart(domains_data: dict) -> go.Figure:
                 range=[0, 5],
                 tickvals=[0, 1, 2, 3, 4, 5],
                 ticktext=["0 - Incompleto", "1 - Inicial", "2 - Gestionado", "3 - Establecido", "4 - Predecible", "5 - Optimizado"],
-                tickfont=dict(size=9, color="#475569")
+                tickfont=dict(size=9, color="#94A3B8"),
+                gridcolor="rgba(148, 163, 184, 0.25)",
+                linecolor="rgba(148, 163, 184, 0.25)"
             ),
             angularaxis=dict(
-                tickfont=dict(size=11, color="#0F172A", family="Outfit")
+                tickfont=dict(size=11, color="#0284C7", family="Outfit"),
+                gridcolor="rgba(148, 163, 184, 0.25)",
+                linecolor="rgba(148, 163, 184, 0.25)"
             )
         ),
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.15,
+            xanchor="center",
+            x=0.5,
+            font=dict(color="#94A3B8")
+        ),
         margin=dict(l=40, r=40, t=30, b=50),
         height=380,
         paper_bgcolor="rgba(0,0,0,0)",
@@ -98,7 +109,12 @@ def show_dashboard():
             active_client = clients[current_idx]
             st.session_state["active_client_id"] = active_client["id"]
             st.markdown("**🏢 Empresa Cliente:**")
-            st.markdown(f"<div style='background:#F1F5F9; border-left:4px solid #059669; padding:8px 12px; border-radius:6px; font-weight:700; color:#0F172A; margin-top:4px;'>{active_client['name']} <span style='font-size:0.75rem; color:#059669; font-weight:600;'>(Acceso Directivo Autorizado)</span></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="client-banner">
+                🏢 {active_client['name']} 
+                <span class="client-banner-tag">(Acceso Directivo Autorizado)</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             selected_client_idx = st.selectbox(
                 "🏢 Selecciona la Empresa Cliente:",
@@ -139,7 +155,7 @@ def show_dashboard():
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Índice Madurez (IMO)</div>
-            <div class="metric-value">{metrics['imo']:.2f} <span style="font-size:1.1rem; color:#64748B;">/ 5.0</span></div>
+            <div class="metric-value">{metrics['imo']:.2f} <span class="metric-scale">/ 5.0</span></div>
             <div class="metric-sub">Nivel: <b>{metrics['level_label']}</b></div>
         </div>
         """, unsafe_allow_html=True)
@@ -148,7 +164,7 @@ def show_dashboard():
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Meta Propuesta</div>
-            <div class="metric-value">{metrics['target_imo']:.2f} <span style="font-size:1.1rem; color:#64748B;">/ 5.0</span></div>
+            <div class="metric-value">{metrics['target_imo']:.2f} <span class="metric-scale">/ 5.0</span></div>
             <div class="metric-sub">Brecha: <b>{metrics['overall_gap']:.2f} pts</b></div>
         </div>
         """, unsafe_allow_html=True)
@@ -157,13 +173,13 @@ def show_dashboard():
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Salud de Gobernanza</div>
-            <div class="metric-value" style="color:#059669;">{metrics['health_score']:.1f}%</div>
+            <div class="metric-value" style="color:#10B981;">{metrics['health_score']:.1f}%</div>
             <div class="metric-sub">Efectividad del Marco TI</div>
         </div>
         """, unsafe_allow_html=True)
 
     with k4:
-        risk_color = "#DC2626" if metrics['risk_score'] > 50 else "#D97706"
+        risk_color = "#EF4444" if metrics['risk_score'] > 50 else "#F59E0B"
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Exposición al Riesgo</div>
