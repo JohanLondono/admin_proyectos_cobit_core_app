@@ -178,55 +178,95 @@ Es el centro de control visual. Aquí no tienes que leer cientos de números: el
 ### MÓDULO 5: 🤖 DIAGNÓSTICO INTELIGENTE E IA
 
 #### ¿Para qué sirve?
-Toma los datos numéricos de la evaluación y los convierte en **diagnósticos en prosa**, hallazgos cualitativos y una matriz de riesgos mediante un motor de inteligencia heurística.
+Toma los datos de la evaluación y los convierte en **diagnósticos ejecutivos en prosa**, hallazgos cualitativos fundamentados y una **matriz cuantitativa de riesgos** mediante un motor de inteligencia artificial semántica (TF-IDF), procesamiento de lenguaje natural (NLP) y análisis multi-fuente.
 
 #### ¿Qué puedes hacer aquí?
-Tiene 3 pestañas muy poderosas:
+Dispone de 3 pestañas avanzadas e intuitivas:
 
-1. **Pestaña "📑 Diagnóstico Integral":**
-   - Te redacta un informe ejecutivo automático con fecha, estado del cliente, hallazgos clave por dominio y recomendaciones prioritarias. ¡Listo para copiar y pegar en un informe!
-2. **Pestaña "🎯 Alineación Estratégica":**
-   - Escribe en una frase lo que la empresa quiere lograr (ej. *"Queremos abrir sucursales en todo el país sin que se caiga el sistema y evitando hackeos"*).
-   - Presionas **"Analizar Alineación"** y la IA te dirá con exactitud matemática cuáles procesos COBIT deben fortalecerse para que ese sueño se haga realidad, con su criticidad y justificación.
-3. **Pestaña "🛡️ Matriz de Riesgos":**
-   - Analiza las debilidades y te alerta sobre los peligros reales: ¿Están expuestos a ransomware? ¿Tienen riesgo de multas legales? ¿Qué acción de mitigación deben tomar ya mismo?
+1. **Pestaña "📑 Diagnóstico Integral Multi-Fuente":**
+   - Te redacta un informe ejecutivo automático y formal adaptado a la empresa (sector, tamaño, madurez IMO, salud y riesgo).
+   - **Inteligencia Documental Activa:** Si cargaste documentos o informes en el Módulo de Ingesta, la IA los lee automáticamente y los cita dentro del diagnóstico.
+   - **Auditoría de Evidencias:** Muestra el porcentaje exacto de procesos que cuentan con evidencias probatorias registradas (útil para auditorías externas).
+   - **Hallazgos Clave por Dominio:** Clasifica cada uno de los 5 dominios COBIT con semáforos de criticidad (🔴 Crítico, 🟡 Atención Requerida, 🟢 Favorable).
+   - **Recomendaciones Dinámicas:** Sugerencias inmediatas generadas a partir de las brechas más graves del cliente.
+
+2. **Pestaña "🎯 Alineación Estratégica con IA / NLP":**
+   - Puedes seleccionar un **reto frecuente del menú desplegable** (ej. *"Expandir canales digitales reduciendo fraudes bancarios y caídas de servicio"*, *"Garantizar continuidad ante ransomware"*, *"Cumplir normatividad de protección de datos"*) o **escribir tu propia meta en lenguaje natural libre**.
+   - Presionas **"🚀 Analizar Alineación Semántica"**.
+   - El motor de Machine Learning (`scikit-learn` con TF-IDF + Similitud Coseno) compara tu frase contra los 40 objetivos COBIT 2019 y te entrega una tabla con:
+     - **Código y Nombre del Proceso COBIT**.
+     - **Afinidad Semántica Porcentual (0% a 100%)**: Qué tan alineado está matemáticamente con tu objetivo.
+     - **Nivel de Criticidad (Alta, Media, Baja)**.
+     - **Justificación Semántica y Práctica Clave de ISACA** que debe aplicarse para lograr la meta.
+
+3. **Pestaña "🛡️ Matriz de Riesgos Tecnológicos y Gobernanza":**
+   - Evalúa matemáticamente la exposición de la empresa en 5 ejes esenciales:
+     1. *Ciberseguridad y Protección de Datos* (`APO13`, `DSS05`, `APO14`).
+     2. *Continuidad Operativa y Resiliencia ante Desastres* (`DSS04`, `DSS01`).
+     3. *Gobernanza Estratégica y Rendimiento de Inversiones* (`EDM01`, `EDM02`, `APO02`).
+     4. *Cumplimiento Normativo, Legal y Aseguramiento* (`MEA02`, `MEA03`).
+     5. *Gestión de Servicios, SLAs y Control de Cambios* (`APO09`, `BAI06`, `DSS02`).
+   - Cada eje te muestra el nivel de riesgo (**Crítico**, **Alto**, **Medio** o **Bajo**), el porcentaje de exposición calculado, la causa raíz derivada de las notas reales del cliente y la acción de mitigación recomendada.
 
 ---
 
-### MÓDULO 6: 🗺️ HOJA DE RUTA (ROADMAP) Y QUICK WINS
+### MÓDULO 6: 🗺️ HOJA DE RUTA (ROADMAP), GANTT Y QUICK WINS
 
 #### ¿Para qué sirve?
-Un diagnóstico sin un plan de acción no sirve para nada. Este módulo toma todas las debilidades encontradas y **construye un plan de proyectos ordenado en el tiempo** para los próximos 18 meses, con presupuesto estimado en dinero y responsables sugeridos.
+Un diagnóstico sin un plan de acción no sirve para nada. Este módulo toma todas las debilidades encontradas y **calcula matemáticamente un plan de proyectos ordenado en el tiempo** mediante análisis multi-criterio (MCDA / WSJF), estimación paramétrica de presupuesto, modelado de dependencias bloqueantes, hitos estratégicos y un **Diagrama de Gantt interactivo**.
 
 #### ¿Cómo se organiza el plan?
-El sistema divide los proyectos en 3 etapas:
-- **Fase 1: Cimientos y Quick Wins (Meses 1 al 3):** Cosas urgentes y rápidas que se pueden solucionar en menos de 90 días con poco dinero (ej. activar autenticación multifactor, publicar el manual de copias de seguridad).
-- **Fase 2: Consolidación y Procesos Core (Meses 4 al 8):** Proyectos más grandes como armar el Plan de Continuidad ante Desastres (DRP) o el Sistema de Gestión de Seguridad (SGSI).
-- **Fase 3: Optimización y Monitoreo (Meses 9 al 18):** Iniciativas avanzadas como analítica de datos, gobierno de datos y mejora continua.
+El sistema divide las iniciativas en 3 etapas secuenciadas por dependencias:
+- **Fase 1: Cimientos y Quick Wins (Meses 1 al 3):** Acciones de alto impacto y bajo esfuerzo que se pueden solucionar en menos de 90 días con poco dinero (ej. activar autenticación multifactor, formalizar el comité de cambios, publicar el catálogo de servicios).
+- **Fase 2: Consolidación y Procesos Core (Meses 4 al 8):** Proyectos estructurales como el Plan de Continuidad ante Desastres (DRP), el Sistema de Gestión de Seguridad (SGSI) o metodologías ágiles de proyectos.
+- **Fase 3: Optimización y Monitoreo Continuo (Meses 9 al 18/24):** Iniciativas avanzadas para alcanzar niveles 4 y 5 de COBIT (métricas cuantitativas, gobierno de datos y auditoría continua).
 
 #### ¿Qué puedes hacer aquí?
-- Ver el **Presupuesto Total Estimado** en pesos colombianos (COP).
-- Revisar la tarjeta verde destacada de **⚡ QUICK WINS** (victorias tempranas que le dan resultados inmediatos al cliente para ganar su confianza).
-- Consultar iniciativa por iniciativa quién es el rol responsable (ej. *CISO*, *Gerente de TI*, *Líder de Proyectos*), cuántos meses dura y cuánto costará.
-- Si cambiaste notas en la evaluación, haces clic en **"⚡ Regenerar Hoja de Ruta"** y el algoritmo recalcula todo el plan al instante.
+1. **Configurar el Algoritmo (Roadmap Engine):**
+   - En el panel desplegable **"⚙️ Motor Algorítmico Multi-Criterio"**, puedes calibrar:
+     - **Estrategia de Optimización:** Elige entre *Equilibrado (Holístico COBIT)*, *Priorizar Quick Wins (< 90 Días)*, *Enfocado en Ciberseguridad y Continuidad* o *Enfocado en Gobierno Directivo*.
+     - **Horizonte Temporal:** Escoge entre 12, 18 o 24 meses de ejecución.
+     - **Tolerancia de Inversión:** Ajusta con el slider si la empresa tiene más o menos holgura presupuestal (0.7x a 1.4x).
+   - Presionas **"⚡ Calcular y Guardar Hoja de Ruta"** y el algoritmo multi-criterio recalculará todo el plan, fechas y dependencias en tiempo real.
+2. **Consultar los Indicadores de Inversión:**
+   - Ver el **Presupuesto Total Estimado** en pesos colombianos (COP), calculado paramétricamente según el tamaño empresarial y sector.
+   - Ver el **Total de Iniciativas** y la cantidad de **Quick Wins** identificados.
+3. **Revisar las Tarjetas de ⚡ QUICK WINS:**
+   - Cada tarjeta destaca el título contextual, la justificación matemática (`qw_reason`), el rol responsable, el costo estimado y el plazo en meses.
+4. **Interactuar con el Diagrama de Gantt (Plotly):**
+   - Cronograma visual interactivo con zoom, paneo y tooltips informativos.
+   - Alterna la coloración entre **Fases Temporales** y **Tipología (Quick Wins vs Estándar)**.
+   - Muestra líneas verticales rojas que demarcan los **Hitos Estratégicos (Milestones)**.
+5. **Revisar los 🚩 Hitos Estratégicos (Milestones):**
+   - Puntos de control formales: **Hito 1** (Mes 3: Cimientos y Quick Wins), **Hito 2** (Mes 6/8: Consolidación y Seguridad) e **Hito 3** (Mes 18: Auditoría y Madurez Objetivo).
+6. **Auditoría de Dependencias Bloqueantes y Ruta Crítica:**
+   - Valida que ninguna tarea inicie antes de la culminación de sus procesos prerrequisito (0 inconsistencias).
+   - Identifica procesos cuello de botella (ej. `APO01`, `EDM01`) y marca con **🔥 Ruta Crítica** las tareas de supervisión obligatoria.
+7. **Explorar el Detalle Técnico por Fase:**
+   - En los acordeones de Fase 1, 2 y 3 verás el alcance, las dependencias bloqueantes, las fechas exactas (`YYYY-MM-DD`), la duración y el presupuesto.
 
 ---
 
-### MÓDULO 7: 📄 INGESTA DOCUMENTAL Y ANÁLISIS NPO (NLP)
+### MÓDULO 7: 📄 INGESTA DOCUMENTAL, TABLAS Y BÚSQUEDA FTS5 (NLP)
 
 #### ¿Para qué sirve?
-A los consultores de TI siempre les entregan documentos densos de 100 páginas (manuales de políticas, informes de auditoría anteriores, planes estratégicos). Este módulo analiza esos textos y **extrae automáticamente las Necesidades, Problemas y Oportunidades (NPO)** sin que tengas que leer página por página.
+A los consultores de TI siempre les entregan documentos densos (manuales de políticas, informes de auditoría, planes estratégicos). Este módulo procesa esos archivos extrayendo **tablas estructuradas (PDF/DOCX)**, validando su **integridad con SHA-256**, permitiendo **búsqueda de texto completo con SQLite FTS5** y **extrayendo automáticamente Necesidades, Problemas y Oportunidades (NPO)** con NLP.
 
 #### ¿Qué puedes hacer aquí?
-1. **Subir un archivo o pegar texto:**
-   - Puedes subir archivos `.txt`, `.docx`, `.pdf`, `.md`, o simplemente copiar y pegar un fragmento del informe de auditoría del cliente en el cuadro de texto.
-2. **Procesar con NLP (Procesamiento de Lenguaje Natural):**
-   - Haces clic en **"🚀 Extraer y Analizar NPO"**.
-   - En segundos, el sistema clasifica la información en 3 columnas:
+1. **Subir archivos con Extracción de Tablas y Verificación SHA-256 (Pestaña 1):**
+   - Puedes subir archivos `.pdf`, `.docx`, `.txt`, `.md`, `.json`, `.csv`.
+   - El sistema calcula su **firma criptográfica SHA-256** para prevenir duplicados y garantizar la inmutabilidad de la evidencia.
+   - Extrae automáticamente las **tablas estructuradas** incrustadas en el PDF o Word y las muestra en pantalla como tablas interactivas con filas y columnas limpias.
+   - Ejecuta NLP para clasificar los hallazgos en:
      - 🎯 **Necesidades (N):** Lo que la empresa debe hacer obligatoriamente.
-     - ⚠️ **Problemas (P):** Fallas, caídas de servicio o riesgos detectados en el texto.
-     - 💡 **Oportunidades (O):** Ideas de modernización y automatización.
-   - Además, te dice qué procesos de COBIT 2019 están relacionados con lo que dice ese documento.
+     - ⚠️ **Problemas (P):** Fallas, caídas de servicio, retrasos o vulnerabilidades.
+     - 💡 **Oportunidades (O):** Ideas de modernización y optimización.
+   - Muestra el **Índice de Urgencia / Severidad (0% a 100%)**, conceptos tecnológicos y procesos COBIT 2019 mapeados.
+2. **Motor de Búsqueda FTS5 de Texto Completo (Pestaña 2):**
+   - Escribe cualquier palabra clave (ej. *ciberseguridad*, *backup*, *ransomware*, *continuidad*, *DRP*).
+   - El motor **SQLite FTS5 con algoritmo BM25** busca en milisegundos en todos los documentos del cliente y te presenta los fragmentos coincidentes (**snippets**) con las palabras resaltadas en color amarillo/azul.
+3. **Repositorio Histórico de Documentos (Pestaña 3):**
+   - Consulta el inventario de documentos cargados para la empresa, con su firma SHA-256, diagnóstico de capa de texto (Digital / OCR) y un visor para consultar las tablas estructuradas archivadas.
 
 ---
 
@@ -289,19 +329,35 @@ Sigue esta guía paso a paso para realizar una consultoría completa de principi
 3. Mira la gráfica de **Radar**: fíjate en qué dominio el área azul está más alejada de la línea verde (ahí está el mayor problema del cliente).
 4. Revisa la tabla del **Top 5 de Brechas Críticas** para saber qué procesos necesitan intervención urgente.
 
-### Paso 5: Consulta el Diagnóstico de la IA
-1. En el menú, haz clic en **"🤖 Diagnóstico e IA"**.
-2. Lee el informe que la IA redactó de forma automática.
-3. Pasa a la pestaña **"Alineación Estratégica"**, escribe un reto del cliente (ej. *"Queremos digitalizar los pagos para reducir errores en cajas"*) y presiona **"Analizar Alineación"**. Verás qué procesos apoyan esa meta.
-4. Pasa a la pestaña **"Matriz de Riesgos"** para ver qué riesgos tecnológicos tiene abiertos la empresa.
+### Paso 5: Consulta el Diagnóstico Inteligente de la IA
+1. En el menú lateral, haz clic en **"🤖 Diagnóstico e IA"**.
+2. En la pestaña **"📑 Diagnóstico Integral"**, revisa el resumen ejecutivo automático, el porcentaje de evidencias trazables y los hallazgos por dominio.
+3. Pasa a la pestaña **"🎯 Alineación Estratégica con IA / NLP"**:
+   - Selecciona un reto preconfigurado del menú desplegable o escribe una meta en el campo de texto (ej. *"Queremos digitalizar los pagos para reducir errores en cajas y evitar fraudes"*).
+   - Presiona **"🚀 Analizar Alineación Semántica"**.
+   - Observa la afinidad semántica porcentual, la criticidad y la práctica de COBIT 2019 que viabiliza el objetivo.
+4. Pasa a la pestaña **"🛡️ Matriz de Riesgos"** para consultar los niveles de exposición calculados en ciberseguridad, continuidad, gobernanza, cumplimiento y servicios.
 
-### Paso 6: Genera la Hoja de Ruta (Roadmap)
+### Paso 6: Genera la Hoja de Ruta Algorítmica, Gantt y Dependencias
 1. En el menú, haz clic en **"🗺️ Hoja de Ruta (Roadmap)"**.
-2. Si es la primera vez, presiona **"🚀 Generar Hoja de Ruta Ahora"**.
-3. Revisa la tarjeta de **⚡ Quick Wins**: esos son los proyectos que debes proponerle al cliente que inicie este mismo mes.
-4. Explora las pestañas de **Fase 1, Fase 2 y Fase 3** para ver el cronograma a 18 meses y el presupuesto total sugerido.
+2. Despliega el panel **"⚙️ Motor Algorítmico Multi-Criterio"**:
+   - Escoge la estrategia de optimización deseada (*Equilibrado*, *Priorizar Quick Wins*, *Ciberseguridad y Continuidad* o *Gobierno Directivo*).
+   - Selecciona el horizonte de tiempo (12, 18 o 24 meses).
+   - Ajusta la holgura de inversión con el slider.
+3. Presiona **"⚡ Calcular y Guardar Hoja de Ruta"**.
+4. Revisa la sección destacada de **⚡ Quick Wins Prioritarios**: el algoritmo te explicará la justificación matemática de por qué iniciarlos en los primeros 90 días.
+5. Examina el **Diagrama de Gantt interactivo**: haz zoom, coloca el cursor sobre las barras para ver los costos y las dependencias, y revisa las líneas rojas de los **3 Hitos Estratégicos (Milestones)**.
+6. Consulta la **Auditoría de Dependencias Bloqueantes**: corrobora que no existan dependencias circulares y ubica las tareas prioritarias en la **🔥 Ruta Crítica**.
+7. Explora las pestañas de **Fase 1, Fase 2 y Fase 3** para examinar los proyectos detallados con sus fechas calendario, alcances técnicos, roles responsables y presupuestos paramétricos en COP.
 
-### Paso 7: Descarga los Entregables Finales
+### Paso 7: Ingesta Documental, Tablas y Búsqueda FTS5
+1. En el menú, haz clic en **"📄 Ingesta Documental"**.
+2. En la pestaña **"📤 Cargar y Analizar Documento"**, sube un archivo PDF o Word institucional (o pega texto).
+3. Presiona **"🚀 Extraer Tablas y Analizar NPO"**.
+4. Visualiza las **tablas estructuradas** extraídas automáticamente del documento y el hash criptográfico **SHA-256** generado para garantizar su autenticidad.
+5. Ve a la pestaña **"🔍 Búsqueda FTS5 de Texto Completo"** y escribe cualquier término (ej. *ciberseguridad*, *riesgo*, *backup*) para ver búsquedas instantáneas con resaltado de fragmentos (*snippets*).
+
+### Paso 8: Descarga los Entregables Finales
 1. En el menú, haz clic en **"📥 Reportes y Descargas"**.
 2. Haz clic en el botón azul **"⬇️ Descargar Informe PDF"**. Se guardará en tu computador un archivo PDF formal listo para imprimir o enviar por correo.
 3. Haz clic en el botón verde **"⬇️ Descargar Libro Excel (.xlsx)"** para tener todas las tablas y notas en hojas de cálculo.

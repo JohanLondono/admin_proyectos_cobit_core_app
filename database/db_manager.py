@@ -7,6 +7,7 @@ import sqlite3
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Any
@@ -159,10 +160,65 @@ def init_db():
             file_size INTEGER,
             extracted_text TEXT,
             npo_analysis TEXT, -- JSON con necesidades, problemas y oportunidades
+            file_hash TEXT,
+            extracted_tables TEXT, -- JSON con tablas tabulares estructuradas
+            ocr_status TEXT DEFAULT 'digital',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
         );
         """)
+
+        # Migraciones automáticas transparentes para columnas adicionales
+        # 1. Tabla documents
+        cursor.execute("PRAGMA table_info(documents)")
+        doc_cols = [r[1] for r in cursor.fetchall()]
+        if "file_hash" not in doc_cols:
+            cursor.execute("ALTER TABLE documents ADD COLUMN file_hash TEXT;")
+        if "extracted_tables" not in doc_cols:
+            cursor.execute("ALTER TABLE documents ADD COLUMN extracted_tables TEXT;")
+        if "ocr_status" not in doc_cols:
+            cursor.execute("ALTER TABLE documents ADD COLUMN ocr_status TEXT DEFAULT 'digital';")
+
+        # 2. Tabla roadmaps
+        cursor.execute("PRAGMA table_info(roadmaps)")
+        road_cols = [r[1] for r in cursor.fetchall()]
+        if "milestones" not in road_cols:
+            cursor.execute("ALTER TABLE roadmaps ADD COLUMN milestones TEXT;")
+
+        # 3. Tabla roadmap_initiatives
+        cursor.execute("PRAGMA table_info(roadmap_initiatives)")
+        init_cols = [r[1] for r in cursor.fetchall()]
+        if "dependencies" not in init_cols:
+            cursor.execute("ALTER TABLE roadmap_initiatives ADD COLUMN dependencies TEXT;")
+        if "start_month" not in init_cols:
+            cursor.execute("ALTER TABLE roadmap_initiatives ADD COLUMN start_month INTEGER DEFAULT 1;")
+        if "end_month" not in init_cols:
+            cursor.execute("ALTER TABLE roadmap_initiatives ADD COLUMN end_month INTEGER DEFAULT 3;")
+        if "start_date" not in init_cols:
+            cursor.execute("ALTER TABLE roadmap_initiatives ADD COLUMN start_date TEXT;")
+        if "end_date" not in init_cols:
+            cursor.execute("ALTER TABLE roadmap_initiatives ADD COLUMN end_date TEXT;")
+
+        # 4. Tabla virtual SQLite FTS5 para búsqueda de texto completo
+        cursor.execute("""
+        CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
+            document_id UNINDEXED,
+            client_id UNINDEXED,
+            filename,
+            extracted_text,
+            tokenize='unicode61'
+        );
+        """)
+
+        # Sincronizar FTS5 si está vacía pero hay documentos existentes
+        cursor.execute("SELECT COUNT(*) FROM documents_fts")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("SELECT id, client_id, filename, extracted_text FROM documents")
+            for doc in cursor.fetchall():
+                cursor.execute("""
+                    INSERT INTO documents_fts (document_id, client_id, filename, extracted_text)
+                    VALUES (?, ?, ?, ?)
+                """, (doc[0], doc[1], doc[2], doc[3] or ""))
 
         conn.commit()
 
@@ -548,15 +604,25 @@ def save_all_assessment_scores(assessment_id: int, scores_data: List[Dict[str, A
 # =====================================================================
 
 def get_roadmap_by_assessment(assessment_id: int) -> Optional[Dict[str, Any]]:
-    """Obtiene la hoja de ruta asociada a una evaluación."""
+    """Obtiene la hoja de ruta asociada a una evaluación con sus hitos estratégicos."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM roadmaps WHERE assessment_id = ? ORDER BY id DESC LIMIT 1", (assessment_id,))
         row = cursor.fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        res = dict(row)
+        if res.get("milestones"):
+            try:
+                res["milestones"] = json.loads(res["milestones"])
+            except Exception:
+                res["milestones"] = []
+        else:
+            res["milestones"] = []
+        return res
 
 def get_roadmap_initiatives(roadmap_id: int) -> List[Dict[str, Any]]:
-    """Retorna las iniciativas ordenadas por fase y prioridad."""
+    """Retorna las iniciativas ordenadas por fase, Quick Wins y prioridad, con sus dependencias y fechas."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -564,10 +630,31 @@ def get_roadmap_initiatives(roadmap_id: int) -> List[Dict[str, Any]]:
             WHERE roadmap_id = ? 
             ORDER BY phase ASC, is_quick_win DESC, priority ASC
         """, (roadmap_id,))
-        return [dict(row) for row in cursor.fetchall()]
+        results = []
+        for row in cursor.fetchall():
+            item = dict(row)
+            if item.get("dependencies"):
+                try:
+                    item["dependencies"] = json.loads(item["dependencies"])
+                except Exception:
+                    item["dependencies"] = []
+            else:
+                item["dependencies"] = []
+            results.append(item)
+        return results
 
-def save_roadmap(assessment_id: int, client_id: int, title: str, total_budget: float, horizon_months: int, summary: str, initiatives: List[Dict[str, Any]]) -> int:
-    """Crea o reemplaza la hoja de ruta e inserta sus iniciativas."""
+def save_roadmap(
+    assessment_id: int,
+    client_id: int,
+    title: str,
+    total_budget: float,
+    horizon_months: int,
+    summary: str,
+    initiatives: List[Dict[str, Any]],
+    milestones: List[Dict[str, Any]] = None
+) -> int:
+    """Crea o actualiza la hoja de ruta e inserta sus iniciativas, dependencias bloqueantes e hitos."""
+    milestones_json = json.dumps(milestones or [], ensure_ascii=False)
     with get_connection() as conn:
         cursor = conn.cursor()
         # Verificar si ya existe
@@ -577,24 +664,26 @@ def save_roadmap(assessment_id: int, client_id: int, title: str, total_budget: f
             roadmap_id = existing[0]
             cursor.execute("""
                 UPDATE roadmaps 
-                SET title = ?, total_budget = ?, horizon_months = ?, summary = ?
+                SET title = ?, total_budget = ?, horizon_months = ?, summary = ?, milestones = ?
                 WHERE id = ?
-            """, (title, total_budget, horizon_months, summary, roadmap_id))
+            """, (title, total_budget, horizon_months, summary, milestones_json, roadmap_id))
             cursor.execute("DELETE FROM roadmap_initiatives WHERE roadmap_id = ?", (roadmap_id,))
         else:
             cursor.execute("""
-                INSERT INTO roadmaps (assessment_id, client_id, title, total_budget, horizon_months, summary)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (assessment_id, client_id, title, total_budget, horizon_months, summary))
+                INSERT INTO roadmaps (assessment_id, client_id, title, total_budget, horizon_months, summary, milestones)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (assessment_id, client_id, title, total_budget, horizon_months, summary, milestones_json))
             roadmap_id = cursor.lastrowid
 
         for init in initiatives:
+            deps_val = init.get("dependencies", [])
+            deps_json = json.dumps(deps_val if isinstance(deps_val, list) else [], ensure_ascii=False)
             cursor.execute("""
                 INSERT INTO roadmap_initiatives (
                     roadmap_id, process_id, phase, title, description,
                     is_quick_win, priority, estimated_months, estimated_cost,
-                    responsible_role, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    responsible_role, status, dependencies, start_month, end_month, start_date, end_date
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 roadmap_id,
                 init.get("process_id"),
@@ -606,40 +695,70 @@ def save_roadmap(assessment_id: int, client_id: int, title: str, total_budget: f
                 init.get("estimated_months", 3),
                 init.get("estimated_cost", 0.0),
                 init.get("responsible_role", "Líder de TI"),
-                init.get("status", "pending")
+                init.get("status", "pending"),
+                deps_json,
+                init.get("start_month", 1),
+                init.get("end_month", 3),
+                init.get("start_date", ""),
+                init.get("end_date", "")
             ))
 
         conn.commit()
         return roadmap_id
 
 # =====================================================================
-# FUNCIONES CRUD: DOCUMENTOS E INGESTA
+# FUNCIONES CRUD: DOCUMENTOS, FTS5 Y EXTRACCIÓN
 # =====================================================================
 
-def save_document(client_id: int, filename: str, file_type: str, file_size: int, extracted_text: str, npo_analysis: Dict[str, Any]) -> int:
-    """Guarda un documento y su análisis NPO."""
+def save_document(
+    client_id: int,
+    filename: str,
+    file_type: str,
+    file_size: int,
+    extracted_text: str,
+    npo_analysis: Dict[str, Any],
+    file_hash: str = "",
+    extracted_tables: List[Dict[str, Any]] = None,
+    ocr_status: str = "digital"
+) -> int:
+    """Guarda un documento, su análisis NPO, tablas estructuradas e índice FTS5."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO documents (client_id, filename, file_type, file_size, extracted_text, npo_analysis)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO documents (
+                client_id, filename, file_type, file_size, extracted_text,
+                npo_analysis, file_hash, extracted_tables, ocr_status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             client_id,
             filename,
             file_type,
             file_size,
             extracted_text,
-            json.dumps(npo_analysis, ensure_ascii=False)
+            json.dumps(npo_analysis, ensure_ascii=False),
+            file_hash,
+            json.dumps(extracted_tables or [], ensure_ascii=False),
+            ocr_status
         ))
+        doc_id = cursor.lastrowid
+
+        # Sincronizar en tabla virtual FTS5 para búsqueda rápida de texto completo
+        cursor.execute("""
+            INSERT INTO documents_fts (document_id, client_id, filename, extracted_text)
+            VALUES (?, ?, ?, ?)
+        """, (doc_id, client_id, filename, extracted_text))
+
         conn.commit()
-        return cursor.lastrowid
+        return doc_id
 
 def get_documents_by_client(client_id: int) -> List[Dict[str, Any]]:
-    """Retorna los documentos cargados para un cliente."""
+    """Retorna los documentos cargados para un cliente, con metadatos y análisis NPO."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, client_id, filename, file_type, file_size, npo_analysis, created_at
+            SELECT id, client_id, filename, file_type, file_size, file_hash, ocr_status,
+                   npo_analysis, extracted_tables, created_at
             FROM documents
             WHERE client_id = ?
             ORDER BY created_at DESC
@@ -652,11 +771,18 @@ def get_documents_by_client(client_id: int) -> List[Dict[str, Any]]:
                     item["npo_analysis"] = json.loads(item["npo_analysis"])
                 except Exception:
                     pass
+            if item.get("extracted_tables"):
+                try:
+                    item["extracted_tables"] = json.loads(item["extracted_tables"])
+                except Exception:
+                    item["extracted_tables"] = []
+            else:
+                item["extracted_tables"] = []
             results.append(item)
         return results
 
 def get_document_by_id(doc_id: int) -> Optional[Dict[str, Any]]:
-    """Retorna el documento con su texto completo extraído."""
+    """Retorna el documento con su texto completo extraído y tablas."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM documents WHERE id = ?", (doc_id,))
@@ -668,5 +794,102 @@ def get_document_by_id(doc_id: int) -> Optional[Dict[str, Any]]:
                     item["npo_analysis"] = json.loads(item["npo_analysis"])
                 except Exception:
                     pass
+            if item.get("extracted_tables"):
+                try:
+                    item["extracted_tables"] = json.loads(item["extracted_tables"])
+                except Exception:
+                    item["extracted_tables"] = []
+            else:
+                item["extracted_tables"] = []
             return item
         return None
+
+def get_document_by_hash(client_id: int, file_hash: str) -> Optional[Dict[str, Any]]:
+    """Busca si un documento con el mismo hash SHA-256 ya fue cargado para este cliente."""
+    if not file_hash:
+        return None
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM documents WHERE client_id = ? AND file_hash = ? LIMIT 1", (client_id, file_hash))
+        row = cursor.fetchone()
+        if row:
+            item = dict(row)
+            if item.get("npo_analysis"):
+                try:
+                    item["npo_analysis"] = json.loads(item["npo_analysis"])
+                except Exception:
+                    pass
+            if item.get("extracted_tables"):
+                try:
+                    item["extracted_tables"] = json.loads(item["extracted_tables"])
+                except Exception:
+                    item["extracted_tables"] = []
+            return item
+        return None
+
+def search_documents_fts(client_id: int, query: str) -> List[Dict[str, Any]]:
+    """
+    Realiza búsqueda de texto completo utilizando SQLite FTS5 con BM25 y snippets contextuales.
+    Soporta comodines y términos múltiples.
+    """
+    if not query or not query.strip():
+        return []
+
+    # Sanitizar términos de búsqueda para FTS5
+    clean_terms = re.sub(r'[\'\"\*\:\(\)\{\}\^\~]', ' ', query).strip().split()
+    if not clean_terms:
+        return []
+
+    # Formular query con comodín prefijo en el último término para autocompletado
+    fts_expr = " AND ".join([f'"{t}"*' for t in clean_terms])
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                SELECT 
+                    documents_fts.document_id,
+                    documents_fts.filename,
+                    snippet(documents_fts, 3, '<mark style="background-color: #38BDF8; color: #0F172A; font-weight: bold; padding: 2px 4px; border-radius: 3px;">', '</mark>', '...', 16) AS snippet,
+                    bm25(documents_fts) AS rank_score,
+                    d.file_type,
+                    d.file_size,
+                    d.created_at,
+                    d.npo_analysis,
+                    d.ocr_status
+                FROM documents_fts
+                JOIN documents d ON d.id = documents_fts.document_id
+                WHERE documents_fts.client_id = ? AND documents_fts MATCH ?
+                ORDER BY rank_score ASC
+                LIMIT 25
+            """, (client_id, fts_expr))
+            rows = cursor.fetchall()
+            results = []
+            for r in rows:
+                item = dict(r)
+                if item.get("npo_analysis"):
+                    try:
+                        item["npo_analysis"] = json.loads(item["npo_analysis"])
+                    except Exception:
+                        pass
+                results.append(item)
+            return results
+        except sqlite3.OperationalError:
+            # Fallback en caso de incompatibilidad sintáctica puntual
+            cursor.execute("""
+                SELECT id as document_id, filename, file_type, file_size, created_at, npo_analysis, ocr_status,
+                       substr(extracted_text, 1, 200) as snippet, 0.0 as rank_score
+                FROM documents
+                WHERE client_id = ? AND extracted_text LIKE ?
+                LIMIT 20
+            """, (client_id, f"%{clean_terms[0]}%"))
+            results = []
+            for r in cursor.fetchall():
+                item = dict(r)
+                if item.get("npo_analysis"):
+                    try:
+                        item["npo_analysis"] = json.loads(item["npo_analysis"])
+                    except Exception:
+                        pass
+                results.append(item)
+            return results

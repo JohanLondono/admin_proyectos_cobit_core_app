@@ -92,8 +92,12 @@ def test_system():
     print(f"  -> Salud de Gobernanza: {metrics['health_score']:.1f}% | Riesgo: {metrics['risk_score']:.1f}% - OK")
 
     # 4. Test Motor de IA y Alineación Estratégica
-    print("\n[4/6] Probando Motor de IA y Alineación Estratégica [COB-ST09, COB-ST12, COB-ST13]...")
-    from engine.ai_engine import align_business_goals, analyze_npo_text, generate_heuristic_diagnosis
+    print("\n[4/6] Probando Motor de IA, NLP, FTS5 y Extracción de Tablas [COB-ST08, COB-ST09, COB-ST12, COB-ST13]...")
+    from engine.ai_engine import (
+        align_business_goals, analyze_npo_text, generate_heuristic_diagnosis,
+        extract_document_content, calculate_content_hash
+    )
+    from database.db_manager import save_document, search_documents_fts, get_document_by_hash
 
     alignment = align_business_goals("Aumentar ciberseguridad y evitar caídas en banca", "Servicios Financieros")
     assert len(alignment) >= 1, "Error: No se generó alineación estratégica"
@@ -110,14 +114,54 @@ def test_system():
     assert len(diag["risks"]) >= 1, "Error: No se generaron riesgos"
     print("  -> Diagnóstico cualitativo y matriz de riesgos generada: OK")
 
+    # Prueba de extracción de tablas y hash SHA-256 en PDF real
+    pdf_path = APP_DIR / "data" / "Auditoria_Ciberseguridad_y_Continuidad_Hospital_San_Rafael.pdf"
+    if pdf_path.exists():
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+        extracted_doc = extract_document_content(pdf_bytes, pdf_path.name)
+        assert len(extracted_doc["file_hash"]) == 64, "Error: Hash SHA-256 inválido"
+        assert extracted_doc["tables_count"] >= 1, "Error: No se extrajeron tablas del PDF"
+        print(f"  -> Extracción PDF: {extracted_doc['tables_count']} tablas, SHA-256: {extracted_doc['file_hash'][:12]}... - OK")
+
+        # Guardar en BD e indexar en FTS5
+        doc_id = save_document(
+            client_id=client["id"],
+            filename=pdf_path.name,
+            file_type="application/pdf",
+            file_size=len(pdf_bytes),
+            extracted_text=extracted_doc["extracted_text"],
+            npo_analysis=npo,
+            file_hash=extracted_doc["file_hash"],
+            extracted_tables=extracted_doc["extracted_tables"],
+            ocr_status=extracted_doc["ocr_status"]
+        )
+        assert doc_id > 0, "Error: No se guardó el documento"
+
+        # Validar búsqueda FTS5 con snippets
+        fts_res = search_documents_fts(client["id"], "ciberseguridad")
+        assert len(fts_res) >= 1, "Error: Búsqueda FTS5 no arrojó resultados"
+        assert "snippet" in fts_res[0], "Error: FTS5 no generó snippets resaltados"
+        print(f"  -> Búsqueda de texto completo SQLite FTS5 (BM25 + Snippets): {len(fts_res)} coincidencias - OK")
+
     # 5. Test Generador de Hoja de Ruta (Roadmap)
-    print("\n[5/6] Probando Generador de Hoja de Ruta [COB-TK10, COB-ST14]...")
-    from engine.roadmap_engine import generate_roadmap_plan
+    print("\n[5/6] Probando Generador de Hoja de Ruta, Dependencias y Gantt [COB-TK10, COB-ST14, COB-ST15]...")
+    from engine.roadmap_engine import generate_roadmap_plan, create_interactive_gantt_chart, validate_roadmap_dependencies
     roadmap_plan = generate_roadmap_plan(scores, client["name"])
     assert roadmap_plan["total_budget"] > 0, "Error: Presupuesto total inválido"
     assert len(roadmap_plan["initiatives"]) >= 3, "Error: Muy pocas iniciativas generadas"
     assert roadmap_plan["quick_wins_count"] >= 1, "Error: No se identificaron Quick Wins"
+    assert len(roadmap_plan["milestones"]) >= 3, "Error: No se generaron hitos estratégicos"
+    assert roadmap_plan["validation"]["is_valid"] is True, f"Error: Dependencias inconsistentes: {roadmap_plan['validation']['conflicts']}"
+    assert roadmap_plan["validation"]["total_dependencies"] > 0, "Error: No se mapearon dependencias COBIT"
+    
+    # Validar creación del gráfico de Gantt interactivo con Plotly
+    gantt_chart = create_interactive_gantt_chart(roadmap_plan["initiatives"], roadmap_plan["milestones"])
+    assert len(gantt_chart.data) >= 1, "Error: Gráfico de Gantt no contiene trazas de datos"
+
     print(f"  -> Roadmap generado: {len(roadmap_plan['initiatives'])} iniciativas ({roadmap_plan['quick_wins_count']} Quick Wins) - OK")
+    print(f"  -> Hitos estratégicos ({len(roadmap_plan['milestones'])} Milestones) y {roadmap_plan['validation']['total_dependencies']} dependencias bloqueantes validadas: OK")
+    print(f"  -> Diagrama de Gantt interactivo Plotly con {len(gantt_chart.data)} trazas: OK")
     print(f"  -> Presupuesto Total: ${roadmap_plan['total_budget']:,.0f} COP - OK")
 
     # 6. Test Exportación de Reportes PDF y Excel

@@ -224,20 +224,21 @@ Para garantizar la comprensión integral de la dinámica operativa del sistema, 
 4. **Persistencia Transaccional:** `app.py` invoca la capa de persistencia `database/db_manager.py:save_all_assessment_scores()`, la cual abre una transacción ACID, ejecuta `UPDATE` parametrizados sobre la tabla `assessment_scores` y actualiza el campo `overall_score` en la tabla `assessments`.
 5. **Retorno y Re-renderizado:** La base de datos confirma la transacción; `app.py` actualiza las métricas en `st.session_state` y redirige el flujo hacia la interfaz, donde `views/dashboard_view.py` recibe los nuevos valores e invoca a `Plotly.js` para redibujar el polígono polar radar y actualizar los KPIs de forma instantánea.
 
-#### Flujo 2: Ingesta Documental y Minería Heurística de NPO (NLP)
-1. **Carga del Archivo:** En `views/documents_view.py`, el usuario sube un archivo de informe de auditoría (`.pdf` o `.docx`).
+#### Flujo 2: Ingesta Documental, Minería NPO y Correlación Semántica (NLP)
+1. **Carga del Archivo o Texto:** En `views/documents_view.py`, el usuario sube un archivo de informe de auditoría (`.pdf`, `.docx`, `.txt`, `.md`, `.json`, `.csv`) o pega un texto institucional.
 2. **Extracción y Normalización:** La vista transfiere el flujo binario a `ai_engine.py`, el cual utiliza los parsers documentales (`pypdf` o `python-docx`) para extraer el texto plano sin estructurar y eliminar ruido textual.
-3. **Minería de Texto:** El motor aplica análisis heurístico con expresiones regulares y diccionarios de patrones para clasificar los hallazgos en la matriz **NPO (Necesidades, Problemas, Oportunidades)** y mapearlos contra los 40 objetivos COBIT 2019.
-4. **Almacenamiento de Evidencias:** `db_manager.py:save_document()` registra el archivo en la tabla `documents` vinculándolo con el `client_id` y `assessment_id` activo.
-5. **Presentación de Resultados:** La interfaz muestra la tabla de hallazgos NPO extraídos, resaltando las alertas críticas para consideración del consultor.
+3. **Minería de Lenguaje Natural y Detección NPO:** El motor aplica análisis sintáctico-semántico con expresiones regulares avanzadas para clasificar los hallazgos en la matriz **NPO (Necesidades, Problemas, Oportunidades)**, calcula un **Índice de Urgencia/Severidad cuantitativo (0 a 100%)**, detecta menciones de infraestructura/tecnologías y vectoriza el texto mediante **TF-IDF + Similitud Coseno** contra los 40 objetivos COBIT 2019 para identificar con exactitud los procesos impactados.
+4. **Almacenamiento de Evidencias:** `db_manager.py:save_document()` registra el archivo y el resultado NPO estructurado en formato JSON en la tabla `documents` vinculándolo con el `client_id` activo.
+5. **Presentación de Resultados:** La interfaz muestra las tarjetas métricas (severidad, tecnologías, procesos mapeados) y la tabla de hallazgos NPO extraídos, integrando estos datos posteriormente en el diagnóstico y la hoja de ruta.
 
-#### Flujo 3: Generación Algorítmica de la Hoja de Ruta (Roadmap)
-1. **Solicitud de Generación:** El consultor ingresa a `views/roadmap_view.py` y activa la formulación del plan de transformación.
-2. **Procesamiento Multi-criterio:** `roadmap_engine.py:generate_roadmap_plan()` consulta las brechas activas de madurez ($Gap = Meta - Actual$) y aplica la fórmula de priorización multi-criterio [COB-TK10]:
-   $$\text{Score} = (\text{Brecha} \times 0.40) + (\text{Impacto} \times 0.35) + (\text{Riesgo} \times 0.25)$$
-3. **Clasificación y Presupuesto:** El motor segrega las iniciativas con esfuerzo bajo y alto impacto como **Quick Wins**, asigna costos base de consultoría e inversión tecnológica, y distribuye las actividades en 3 fases temporales (0-6 meses, 6-12 meses, 12-24 meses).
+#### Flujo 3: Generación Algorítmica Multi-Criterio de la Hoja de Ruta (Roadmap)
+1. **Solicitud de Generación y Parametrización:** El consultor ingresa a `views/roadmap_view.py`, ajusta la estrategia de optimización (Equilibrado, Quick Wins, Ciberseguridad/Continuidad o Gobierno Directivo), el horizonte (12, 18 o 24 meses) y la tolerancia de inversión.
+2. **Procesamiento Multi-criterio (MCDA / AHP + WSJF):** `roadmap_engine.py:generate_roadmap_plan()` consulta las brechas activas de madurez ($Gap = Meta - Actual$), el tamaño y sector de la empresa, y los hallazgos documentales NLP. Aplica el modelo de priorización:
+   $$\text{WSJF} = \frac{\text{Impacto}^{1.15}}{\text{Esfuerzo}^{0.85}}$$
+   donde el Impacto ($1.0-10.0$) y el Esfuerzo ($1.0-10.0$) se calculan mediante funciones multi-variables y penalizaciones de evidencia.
+3. **Detección Algorítmica de Quick Wins y Estimación Paramétrica:** El motor clasifica automáticamente las iniciativas de alto impacto y bajo esfuerzo ejecutable en menos de 90 días como **Quick Wins**, calcula el presupuesto paramétrico en COP en función del salto de madurez y el multiplicador de escala empresarial, asigna roles institucionales y distribuye las actividades en 3 fases temporales (Meses 1-3, 4-8, 9-18).
 4. **Persistencia Estructurada:** La capa DAL (`save_roadmap()`) guarda el encabezado en `roadmaps` y cada iniciativa en `roadmap_initiatives`.
-5. **Renderizado Visual:** La vista presenta las tarjetas visuales por fase, los presupuestos estimados y los gráficos de distribución de iniciativas.
+5. **Renderizado Visual:** La vista presenta las tarjetas interactivas de Quick Wins con su justificación algorítmica, los presupuestos estimados por fase y los desgloses técnicos de alcance y entregables.
 
 #### Flujo 4: Compilación y Descarga de Entregables Ejecutivos (PDF / Excel)
 1. **Petición de Exportación:** En `views/reports_view.py`, el usuario presiona *"Descargar Informe Ejecutivo Formal (PDF)"*.
@@ -457,43 +458,88 @@ sequenceDiagram
 
 ---
 
-### 4.6. Diagnóstico de Brechas e Inteligencia Artificial [COB-ST12, COB-ST13]
-- **Pestaña 1: Diagnóstico Integral Heurístico:**
-  - Genera automáticamente un Resumen Ejecutivo estructurado con fecha, nivel de salud y conclusiones formales.
-  - Hallazgos clave automáticos clasificados por dominio según la magnitud de la brecha.
-  - Lista de recomendaciones de acción inmediata sugeridas para el comité de TI.
-- **Pestaña 2: Asistente de Alineación Estratégica Negocio -> TI:**
-  - Permite al consultor escribir en lenguaje natural una meta comercial (ej. *"Expandir canales digitales reduciendo fraudes bancarios y tiempos de respuesta"*).
-  - El motor semántico analiza las intenciones y extrae los procesos COBIT 2019 que soportan directamente dicha meta (ej. `APO13`, `DSS05`, `BAI02`, `EDM02`), indicando su nivel de criticidad y la justificación técnica.
-- **Pestaña 3: Matriz de Riesgos Tecnológicos:**
-  - Mapeo automatizado de riesgos operacionales clasificados en categorías: *Ciberseguridad y Resiliencia*, *Alineación Estratégica*, *Continuidad Operativa*.
-  - Clasificación de severidad (*Alto*, *Medio*, *Bajo*) en función del IMO actual y acciones mitigantes asociadas a procesos COBIT.
+### 4.6. Diagnóstico de Brechas e Inteligencia Artificial Semántica [COB-ST12, COB-ST13]
+- **Pestaña 1: Diagnóstico Integral Multi-Fuente:**
+  - Sintetiza 4 fuentes de datos: ficha corporativa del cliente, métricas cuantitativas globales (IMO, Salud, Riesgo), micro-datos de calificaciones y evidencias, y hallazgos documentales NLP.
+  - Alerta sobre la **trazabilidad documental** calculando el porcentaje de procesos que cuentan con evidencias probatorias registradas.
+  - Hallazgos detallados por dominio con semáforos de criticidad (🔴 Crítico, 🟡 Atención Requerida, 🟢 Favorable).
+  - Recomendaciones dinámicas de acción inmediata generadas en función de las mayores brechas y áreas desatendidas.
+- **Pestaña 2: Asistente de Alineación Estratégica con IA / NLP (TF-IDF + Coseno):**
+  - Integra un modelo de espacio vectorial con `scikit-learn` entrenado sobre el corpus oficial de los 40 procesos COBIT 2019 (nombres, propósitos, dominios y prácticas).
+  - Permite seleccionar retos preconfigurados o redactar objetivos estratégicos libres (ej. *"Expandir canales digitales reduciendo fraudes bancarios y tiempos de respuesta"*).
+  - Calcula la **afinidad semántica porcentual (0% a 100%)** mediante similitud coseno, incorpora pesos sectoriales y categoriza la criticidad (*Alta*, *Media*, *Baja*).
+  - Devuelve una tabla ejecutiva con la justificación semántica y la **práctica clave recomendada** de ISACA para viabilizar la meta.
+- **Pestaña 3: Matriz Cuantitativa de Riesgos Tecnológicos y de Gobernanza:**
+  - Evaluación cuantitativa de 5 ejes de riesgo empresarial:
+    1. *Ciberseguridad y Protección de Datos* (`APO13`, `DSS05`, `APO14`).
+    2. *Continuidad Operativa y Resiliencia ante Desastres* (`DSS04`, `DSS01`).
+    3. *Gobernanza Estratégica y Rendimiento de Inversiones* (`EDM01`, `EDM02`, `APO02`).
+    4. *Cumplimiento Normativo, Legal y Aseguramiento* (`MEA02`, `MEA03`).
+    5. *Gestión de Servicios, SLAs y Control de Cambios* (`APO09`, `BAI06`, `DSS02`).
+  - Cada riesgo reporta su nivel (**Crítico**, **Alto**, **Medio**, **Bajo**), el porcentaje de exposición calculado dinámicamente, la causa raíz derivada de las calificaciones reales y la acción de mitigación sugerida.
 
 ---
 
-### 4.7. Generador Automático de Hojas de Ruta (Roadmap) [COB-TK10, COB-ST14, COB-ST15]
-- **Generación Algorítmica Multi-Criterio:** Evalúa todas las brechas detectadas y genera un plan estructurado con presupuestos en pesos colombianos (COP), horizontes de tiempo y roles responsables.
-- **Sección Destacada de Quick Wins:**
-  - Destaca de forma prioritaria aquellas iniciativas de alto impacto con tiempo de implementación inferior a 90 días (< 3 meses) y bajo esfuerzo económico (ej. despliegue de MFA, formalización de catálogo de servicios, automatización del comité de cambios).
+### 4.7. Generador Algorítmico de Hojas de Ruta (Roadmap), Gantt y Quick Wins [COB-TK10, COB-ST14, COB-ST15]
+- **Panel de Control y Parametrización Algorítmica:**
+  - Permite al consultor calibrar el motor antes de la generación seleccionando la **Estrategia de Optimización** (*Equilibrado*, *Priorizar Quick Wins*, *Enfocado en Ciberseguridad y Continuidad*, o *Enfocado en Gobierno Directivo*).
+  - Configuración del horizonte temporal (12, 18 o 24 meses) y ajuste fino de la tolerancia de inversión financiera (0.7x a 1.4x).
+- **Cálculo Matemático de Prioridad Multi-Criterio (WSJF / MCDA):**
+  - Evalúa cada proceso con brecha calculando una función de **Impacto (1-10)** y **Esfuerzo (1-10)** que pondera brechas, procesos *Core*, sector económico y penalizaciones por ausencia de evidencias.
+- **Determinación Algorítmica de Quick Wins (< 90 Días):**
+  - Identifica matemáticamente las victorias tempranas de alto impacto relativo y bajo/medio esfuerzo operativo.
+  - Cada Quick Win presenta su tarjeta destacada con justificación algorítmica (`qw_reason`), entregables previstos y costos calculados.
+- **Grafo de Precedencias y Validación de Dependencias Bloqueantes:**
+  - Modela la red de dependencias canónicas COBIT 2019 (ej. `EDM01` y `APO01` desbloquean `APO12` y `APO13`; `APO13` desbloquea `DSS05`).
+  - Aplica un **algoritmo de relajación topológica** para asegurar que ninguna tarea dependiente inicie antes de la culminación de sus prerrequisitos.
+  - Detecta ciclos mediante DFS y previene bloqueos circulares (`is_valid = True`).
+- **Hitos Estratégicos de Control (Milestones):**
+  - Programa puntos de control formales a lo largo del horizonte:
+    - 🚩 **Hito 1 (Mes 3):** Cimientos y Cierre de Quick Wins.
+    - 🚩 **Hito 2 (Mes 6/8):** Consolidación Operativa y Controles de Ciberseguridad.
+    - 🚩 **Hito 3 (Mes Horizon):** Institucionalización y Auditoría Final de Madurez.
+- **Diagrama de Gantt Interactivo (Plotly Express / Timeline):**
+  - Renderiza barras cronológicas interactivas con fechas calendario de inicio y fin (`YYYY-MM-DD`).
+  - Modos de coloración dinámica: por Fase Temporal o por Tipología (Quick Win vs Proyecto Estándar).
+  - Líneas verticales punteadas rojas que demarcan los hitos clave.
+  - Tooltips contextuales (*hover data*) con proceso, presupuesto COP, duración, rol responsable, dependencias bloqueantes e indicador de **🔥 Ruta Crítica**.
+- **Estimación Paramétrica de Presupuesto en COP:**
+  - Sustituye costos fijos por un modelo paramétrico que escala según el tamaño de la empresa (Micro, Pequeña, Mediana, Grande, Corporativa), el sector económico y la complejidad del salto de madurez.
 - **Desglose en 3 Fases Temporales:**
   - **Fase 1: Cimientos y Quick Wins (Meses 1-3):** Victorias tempranas y aseguramiento de políticas básicas.
   - **Fase 2: Consolidación y Procesos Core (Meses 4-8):** Implementación de SGSI, metodologías de proyectos y DRP.
-  - **Fase 3: Optimización y Monitoreo Continuo (Meses 9-18):** Gobierno de datos, tableros BI e innovación.
-- **Botón de Regeneración:** Permite actualizar la hoja de ruta cuando se modifican las calificaciones en el cuestionario.
+  - **Fase 3: Optimización y Monitoreo Continuo (Meses 9-18/24):** Gobierno de datos, tableros BI e innovación.
 
 ---
 
-### 4.8. Ingesta Documental y Análisis NLP (NPO) [COB-ST08, COB-TK07, COB-ST09]
+### 4.8. Ingesta Documental, Extracción de Tablas y Búsqueda FTS5 [COB-ST08, COB-TK07, COB-ST09]
 - **Carga de Archivos de Evidencia:** Acepta documentos en formatos de texto (`.txt`, `.md`, `.json`, `.csv`, `.docx`, `.pdf`).
-- **Entrada Manual de Texto:** Permite pegar directamente extractos de auditorías internas, políticas o minutas de comités.
+- **Verificación Criptográfica de Integridad (SHA-256):**
+  - Calcula el hash SHA-256 del contenido binario para garantizar la inmutabilidad de las evidencias y alertar sobre documentos duplicados previamente cargados.
+- **Extracción de Tablas Estructuradas (PDF y DOCX):**
+  - Extrae y procesa automáticamente tablas incrustadas en informes y planes de TI utilizando `pdfplumber` (para PDF) y `python-docx` (para Word).
+  - Convierte las tablas en estructuras interactivas (`st.dataframe`) con columnas y filas tipificadas, presentadas en pestañas y expanders.
+- **Motor de Búsqueda de Texto Completo con SQLite FTS5:**
+  - Tabla virtual indexada con tokenizador Unicode para consultas ultra rápidas.
+  - Algoritmo de ranking de relevancia **BM25**.
+  - Generación automática de **snippets contextuales** con resaltado visual (`<mark>`) de los términos buscados.
+- **Diagnóstico de Capa de Texto y OCR Opcional:**
+  - Identifica si el documento cuenta con capa digital nativa o si proviene de un escaneo sin texto digitalizado, enrutando a OCR (Tesseract) cuando esté configurado en el host.
 - **Extracción NLP de Necesidades, Problemas y Oportunidades (NPO):**
   - Analiza la semántica textual buscando patrones lingüísticos de requerimientos, deficiencias y mejoras potenciales.
   - Clasifica los hallazgos en tres paneles diferenciados:
     - 🎯 **Necesidades (N):** Requisitos obligatorios no satisfechos.
     - ⚠️ **Problemas (P):** Fallas, desvíos operativos, retrasos o vulnerabilidades.
     - 💡 **Oportunidades (O):** Iniciativas de modernización y optimización.
-- **Mapeo a Procesos COBIT 2019:** Vincula las palabras clave detectadas con los códigos oficiales correspondientes.
-- **Historial Documental:** Repositorio histórico para consultar documentos cargados previamente por cliente.
+- **Indicadores Cuantitativos NLP:**
+  - **Índice de Urgencia / Severidad:** Métrica porcentual (0% a 100%) calculada según la densidad y criticidad de los problemas detectados en el texto.
+  - **Detección de Conceptos y Tecnologías:** Extracción automática de menciones sobre Cloud, ERP, MFA, Firewalls, DRP, Active Directory, SLAs, etc.
+- **Mapeo Vectorial a Procesos COBIT 2019:** Vincula el contenido del documento con los procesos oficiales mediante similitud semántica TF-IDF.
+- **Historial Documental:** Repositorio histórico para consultar documentos cargados previamente por cliente con sus métricas, tablas y firmas SHA-256.
+  - **Índice de Urgencia / Severidad:** Métrica porcentual (0% a 100%) calculada según la densidad y criticidad de los problemas detectados en el texto.
+  - **Detección de Conceptos y Tecnologías:** Extracción automática de menciones sobre Cloud, ERP, MFA, Firewalls, DRP, Active Directory, SLAs, etc.
+- **Mapeo Vectorial a Procesos COBIT 2019:** Vincula el contenido del documento con los procesos oficiales mediante similitud semántica TF-IDF.
+- **Historial Documental:** Repositorio histórico para consultar documentos cargados previamente por cliente con sus métricas.
 
 ---
 
@@ -600,6 +646,7 @@ El sistema maneja dos niveles de datos: **Persistencia Relacional SQLite** (en d
 | `total_budget` | `REAL` | DEFAULT 0.0 | Presupuesto total estimado acumulado en pesos colombianos (COP). |
 | `horizon_months`| `INTEGER` | DEFAULT 18 | Duración total proyectada en meses (ej. 18 meses). |
 | `summary` | `TEXT` | NULL | Síntesis ejecutiva del plan de mejora. |
+| `milestones` | `TEXT` | NULL | JSON con hitos estratégicos (M1, M2, M3) de control y entregables. |
 | `created_at` | `TEXT` | DEFAULT CURRENT_TIMESTAMP | Fecha de generación. |
 
 #### 7. Tabla `roadmap_initiatives` (Proyectos e Iniciativas Específicas)
@@ -617,6 +664,11 @@ El sistema maneja dos niveles de datos: **Persistencia Relacional SQLite** (en d
 | `estimated_cost` | `REAL` | DEFAULT 0.0 | Presupuesto estimado en COP (ej. $16,000,000). |
 | `responsible_role`| `TEXT` | NULL | Rol ejecutor sugerido (ej. `Oficial de Seguridad (CISO)`). |
 | `status` | `TEXT` | DEFAULT 'pending' | Estado: `'pending'`, `'in_progress'`, `'completed'`. |
+| `dependencies` | `TEXT` | NULL | JSON con lista de códigos de procesos prerrequisito bloqueantes. |
+| `start_month` | `INTEGER` | DEFAULT 1 | Mes de inicio programado tras resolver dependencias (1 a 24). |
+| `end_month` | `INTEGER` | DEFAULT 3 | Mes de finalización proyectado de la iniciativa. |
+| `start_date` | `TEXT` | NULL | Fecha calendario calculada de inicio (`YYYY-MM-DD`). |
+| `end_date` | `TEXT` | NULL | Fecha calendario calculada de entrega (`YYYY-MM-DD`). |
 
 #### 8. Tabla `documents` (Evidencias e Ingesta Documental)
 | Columna | Tipo de Dato SQLite | Restricciones | Descripción |
@@ -626,9 +678,20 @@ El sistema maneja dos niveles de datos: **Persistencia Relacional SQLite** (en d
 | `filename` | `TEXT` | NOT NULL | Nombre original del archivo (ej. `Plan_PETI_2026.docx`). |
 | `file_type` | `TEXT` | NULL | Tipo MIME o extensión (`application/pdf`, `text/plain`). |
 | `file_size` | `INTEGER` | NULL | Tamaño en bytes. |
+| `file_hash` | `TEXT` | NULL | Resumen criptográfico SHA-256 para integridad y deduplicación. |
 | `extracted_text`| `TEXT` | NULL | Texto plano extraído para indexación y análisis. |
+| `extracted_tables`| `TEXT` | NULL | JSON con tablas estructuradas (filas, columnas, cabeceras) extraídas. |
+| `ocr_status` | `TEXT` | DEFAULT 'digital'| Diagnóstico de capa de texto: `'digital'`, `'ocr_tesseract'`, `'scanned_no_ocr'`. |
 | `npo_analysis` | `TEXT` | NULL | Cadena JSON estructurada con listas de `needs`, `problems`, `opportunities` y palabras clave detectadas. |
 | `created_at` | `TEXT` | DEFAULT CURRENT_TIMESTAMP | Fecha y hora de carga. |
+
+#### 9. Tabla Virtual `documents_fts` (Motor FTS5 de Búsqueda de Texto Completo)
+| Columna | Tipo de Dato SQLite | Restricciones | Descripción |
+| :--- | :--- | :--- | :--- |
+| `document_id` | `UNINDEXED` | Ref -> `documents(id)` | ID del documento original en SQLite. |
+| `client_id` | `UNINDEXED` | Ref -> `clients(id)` | ID de la empresa para filtrado multi-inquilino. |
+| `filename` | `TEXT` | Indexado en FTS5 | Nombre del archivo para coincidencia léxica. |
+| `extracted_text`| `TEXT` | Indexado en FTS5 | Corpus textual completo tokenizado con `unicode61`. |
 
 ---
 
@@ -842,29 +905,101 @@ $$\text{Exposición al Riesgo (\%)} = 100 - \text{Salud de Gobernanza (\%)} = \l
 ---
 
 ### 6.2. Algoritmo de Priorización Multi-Criterio de la Hoja de Ruta [COB-TK10]
-Para ordenar las iniciativas y asignar su fase de ejecución (Fase 1, 2 o 3), el motor evalúa una función de puntuación compuesta de 0 a 100 puntos:
+Para ordenar las iniciativas, asignar su fase de ejecución y calcular su viabilidad técnica y financiera, el motor implementa un modelo **MCDA / AHP + WSJF (Weighted Shortest Job First)** con estimación paramétrica:
 
-$$\text{Score}(P) = S_{\text{Gap}} + S_{\text{Impacto}} + S_{\text{Esfuerzo}} + S_{\text{Estrategia}}$$
+$$\text{WSJF}(P) = \frac{\text{Impacto}(P)^{1.15}}{\text{Esfuerzo}(P)^{0.85}}$$
 
-1. **Magnitud de la Brecha ($S_{\text{Gap}} \in [0, 40]$):** Proporcional a la distancia entre el estado actual y deseado ($\text{Meta} - \text{Actual}$).
-2. **Impacto en Dependencias COBIT ($S_{\text{Impacto}} \in [0, 30]$):** Procesos que habilitan a otros (ej. seguridad `APO13` y operaciones `DSS01` tienen mayor peso que procesos periféricos).
-3. **Facilidad / Esfuerzo de Implementación ($S_{\text{Esfuerzo}} \in [0, 20]$):** Tiempos de entrega menores a 3 meses otorgan el puntaje máximo de agilidad.
-4. **Valor Estratégico para el Negocio ($S_{\text{Estrategia}} \in [0, 10]$):** Procesos directamente alineados con los objetivos declarados por la empresa.
+#### 1. Función de Impacto Estratégico ($I \in [1.0, 10.0]$):
+$$I(P) = \left( I_{\text{gap}} + I_{\text{core}} + I_{\text{domain}} + I_{\text{sector}} + I_{\text{NLP}} \right) \times M_{\text{strategy}}$$
 
-#### Identificación Automática de Quick Wins:
-Una iniciativa es clasificada como **Quick Win** si cumple simultáneamente:
-$$\text{is\_quick\_win} = \text{True} \iff (\text{Duración} \le 3 \text{ meses}) \land (\text{Brecha} \ge 0.8) \land (\text{Esfuerzo Económico} \le \$20,000,000 \text{ COP})$$
+- **Aporte de Brecha ($I_{\text{gap}} \in [0.0, 4.0]$):** $I_{\text{gap}} = \min\left(4.0, \frac{\text{Meta} - \text{Actual}}{5.0} \times 4.0\right)$.
+- **Bono de Proceso Core ($I_{\text{core}}$):** $+2.0$ si el proceso es esencial en el marco COBIT 2019, $+0.8$ en caso contrario.
+- **Peso de Gobernanza por Dominio ($I_{\text{domain}}$):** EDM ($+1.8$), DSS ($+1.5$), APO ($+1.4$), MEA ($+1.3$), BAI ($+1.2$).
+- **Afinidad Sectorial ($I_{\text{sector}}$):** $+1.8$ si el proceso pertenece al catálogo crítico del sector de la empresa (ej. ciberseguridad en banca o continuidad en salud).
+- **Correlación Documental NLP ($I_{\text{NLP}} \in [0.0, 2.2]$):** Pondera si el proceso fue extraído de los problemas o necesidades detectadas en los documentos cargados.
+- **Modificador de Estrategia ($M_{\text{strategy}}$):** Multiplicador de $1.15$ a $1.45$ según la estrategia seleccionada en la vista (*Quick Wins*, *Ciberseguridad*, *Gobierno* o *Equilibrado*).
+
+#### 2. Función de Esfuerzo y Complejidad ($E \in [1.0, 10.0]$):
+$$E(P) = \left( E_{\text{step}} + E_{\text{gap}} + E_{\text{domain}} + P_{\text{evidence}} \right) \times F_{\text{size}} \times 0.70$$
+
+- **Esfuerzo por Nivel Objetivo ($E_{\text{step}}$):** Nivel 1-2 ($2.0-3.8$), Nivel 3 ($6.2$), Nivel 4-5 ($8.5$).
+- **Esfuerzo por Amplitud de Brecha ($E_{\text{gap}}$):** $\text{Brecha} \times 1.10$.
+- **Sesgo de Dominio ($E_{\text{domain}}$):** BAI ($1.4$), EDM ($1.2$), APO ($1.0$), DSS ($0.9$), MEA ($0.8$).
+- **Penalización por Ausencia de Evidencias ($P_{\text{evidence}}$):** $+1.2$ si el proceso carece de evidencias registradas (indica arranque desde cero).
+- **Factor de Escala Organizacional ($F_{\text{size}}$):** Micro ($0.75$), Pequeña ($0.85$), Mediana ($1.00$), Grande ($1.30$), Multinacional ($1.50$).
+
+#### 3. Determinación Matemática de Quick Wins:
+Una iniciativa es clasificada como **Quick Win** si cumple cualquiera de las siguientes condiciones:
+1. $\text{Impacto} \ge 5.2 \quad \land \quad \text{Esfuerzo} \le 6.0$
+2. $\text{Brecha} \le 1.0 \text{ pts}$ (cierre rápido de brecha corta)
+3. Procesos operativos estandarizados de rápida adopción: $P \in \{\text{APO01, APO09, BAI06, DSS01, DSS02, MEA01, MEA02}\}$
+
+#### 4. Estimación Paramétrica del Presupuesto en COP:
+$$\text{Costo} = \text{Costo Base}(\text{Salto}) \times F_{\text{cost\_size}} \times F_{\text{cost\_sector}} \times T_{\text{budget}}$$
+
+- **Costo Base:** Brecha $\le 1.0$ ($\$6.5\text{M}$), Brecha $\le 2.0$ ($\$13.5\text{M}$), Brecha $\le 3.0$ ($\$22.0\text{M}$), Brecha $> 3.0$ ($\$32.0\text{M}$).
+- **Procesos Especializados:** Procesos de ciberseguridad, arquitectura o datos (`APO13`, `APO14`, `DSS04`, `DSS05`) incorporan factor de $+35\%$.
+- **Factores de Tamaño ($F_{\text{cost\_size}}$):** Micro ($0.60$), Pequeña ($0.75$), Mediana ($1.00$), Grande ($1.65$), Multinacional ($2.20$).
+
+#### 5. Algoritmo de Programación Topológica y Relajación de Dependencias Bloqueantes:
+El motor modela un Grafo Dirigido Acíclico (**DAG**) de precedencias canónicas COBIT 2019 ($\mathcal{G} = (\mathcal{V}, \mathcal{E})$). Para garantizar que ninguna iniciativa dependiente comience antes de que sus prerrequisitos hayan culminado, se aplica un algoritmo de relajación iterativa:
+$$M_{\text{inicio}}(P) = \max\left( M_{\text{fase}}, \max_{D \in \text{Deps}(P)} M_{\text{fin}}(D) \right)$$
+$$M_{\text{fin}}(P) = M_{\text{inicio}}(P) + \text{Duración}(P)$$
+
+Se ejecuta hasta convergencia (garantizando 0 inversiones temporales) y se proyectan fechas calendario precisas (`start_date`, `end_date`) mediante suma de meses a partir de la fecha base del proyecto.
+
+#### 6. Detección de la Ruta Crítica (Critical Path) y Cuellos de Botella:
+Se calcula la duración acumulada de la cadena de dependencias más larga para cada iniciativa:
+$$L(P) = \text{Duración}(P) + \max_{D \in \text{Deps}(P)} L(D)$$
+Las iniciativas pertenecientes al percentil superior de duración ($L(P) \ge 0.70 \times \max(L)$) son clasificadas con la etiqueta **🔥 Ruta Crítica**, requiriendo supervisión estricta de la PMO ya que cualquier retraso desplaza la fecha de cierre del plan global.
+
+#### 7. Hitos Estratégicos (Milestones):
+Se establecen 3 compuertas formales de control:
+- **M1 (Mes 3):** Cimientos y Cierre de Quick Wins.
+- **M2 (Mes 6 u 8):** Consolidación Operativa y Controles de Ciberseguridad.
+- **M3 (Mes Horizon):** Institucionalización y Auditoría Final de Madurez.
 
 ---
 
-### 6.3. Algoritmo de Procesamiento de Lenguaje Natural Heurístico (NPO) [COB-ST09]
-El motor de extracción documental procesa el texto en 3 fases:
-1. **Normalización e Indexación de Términos:** Convierte a minúsculas, remueve signos ortográficos y evalúa expresiones regulares para mapear contra un diccionario de más de 30 conceptos clave de TI (`ciberseguridad`, `sla`, `drp`, `auditoría`, `backups`, etc.).
-2. **Segmentación y Análisis Sintáctico de Oraciones:** Divide el texto en proposiciones lógicas y evalúa disparadores contextuales:
-   - Disparador de Necesidad: `"requiere"`, `"necesita"`, `"debe"`, `"es necesario"`, `"prioridad"`.
-   - Disparador de Problema: `"falla"`, `"error"`, `"retraso"`, `"vulnerabilidad"`, `"carece"`, `"riesgo"`.
-   - Disparador de Oportunidad: `"mejora"`, `"optimizar"`, `"automatizar"`, `"innovar"`, `"potencial"`.
-3. **Mapeo a Objetivos COBIT:** Cada término identificado activa los procesos de ISACA correspondientes (ej. `vulnerabilidad` $\longrightarrow$ `APO13`, `DSS05`).
+### 6.3. Algoritmo de Inteligencia Artificial Semántica (TF-IDF + Coseno) y Minería NPO [COB-ST09, COB-ST12, COB-ST13]
+
+#### 1. Modelo de Espacio Vectorial TF-IDF para COBIT 2019:
+El motor entrena un modelo vectorial unigrama/bigrama con sublinear scaling sobre el corpus oficial de los 40 procesos COBIT:
+$$w_{t,d} = (1 + \ln \text{tf}_{t,d}) \times \ln\left( \frac{1 + N}{1 + \text{df}_t} \right) + 1$$
+
+Cuando el consultor introduce un reto o meta de negocio $\vec{q}$, se calcula la **Similitud Coseno**:
+$$\text{Similitud}(\vec{q}, \vec{d}_i) = \frac{\vec{q} \cdot \vec{d}_i}{\|\vec{q}\| \|\vec{d}_i\|} = \frac{\sum_{k} q_k d_{ik}}{\sqrt{\sum_k q_k^2} \sqrt{\sum_k d_{ik}^2}}$$
+
+El resultado se escala porcentualmente e incorpora bonificaciones sectoriales para devolver los procesos con mayor pertinencia semántica, su nivel de criticidad y la práctica clave de ISACA asociada.
+
+#### 2. Minería de Lenguaje Natural para Detección NPO:
+El texto documental se normaliza y se procesa mediante segmentación oracional y evaluación sintáctica de patrones:
+- **Necesidades (N):** Patrones modales de exigencia (`requiere`, `debe`, `es necesario`, `se proyecta`, `prioridad`).
+- **Problemas (P):** Patrones de fricción operativa y riesgo (`falla`, `error`, `vulnerabilidad`, `manual`, `brecha`, `caída`).
+- **Oportunidades (O):** Patrones de modernización (`optimizar`, `automatizar`, `modernizar`, `migrar`, `escalar`).
+
+#### 3. Índice Cuantitativo de Urgencia / Severidad Documental:
+$$\text{Urgencia (\%)} = \min\left( 95.0, \max\left( 25.0, \frac{\text{Conteo Problemas}}{\text{Total Palabras}} \times 2200 + 35.0 \right) \right)$$
+
+#### 4. Matriz Dinámica de Riesgos Cuantitativos:
+Se evalúa la capacidad media observada en 5 ejes estratégicos ($C_{\text{eje}}$) y se calcula la **Exposición al Riesgo**:
+$$\text{Exposición al Riesgo (\%)} = (5.0 - C_{\text{eje}}) \times 20.0$$
+- $\text{Exposición} \ge 60\% \longrightarrow$ **Riesgo Alto / Crítico**
+- $40\% \le \text{Exposición} < 60\% \longrightarrow$ **Riesgo Medio**
+- $\text{Exposición} < 40\% \longrightarrow$ **Riesgo Bajo**
+
+#### 5. Extracción y Normalización de Tablas Estructuradas (PDF y DOCX):
+El motor procesa archivos binarios mediante `pdfplumber` (análisis geométrico de líneas divisorias y celdas en PDF) y `python-docx` (árbol XML `w:tbl` para Word). Limpia celdas vacías, normaliza encabezados e indexa las tablas en JSON dentro de la base de datos para renderizado nativo en `pandas.DataFrame`.
+
+#### 6. Integridad Criptográfica y Detección de Duplicados (SHA-256):
+Para cada documento cargado se calcula su resumen criptográfico SHA-256:
+$$H = \text{SHA-256}(\text{bytes})$$
+Permite verificar la inalterabilidad de la evidencia pericial y advertir inmediatamente al consultor sobre duplicidades antes de sobreescribir expedientes.
+
+#### 7. Búsqueda de Texto Completo FTS5 y Relevancia BM25:
+La tabla virtual SQLite FTS5 indexa el corpus completo tokenizado con `unicode61`. Las consultas calculan el ranking de coincidencia probabilística Okapi BM25:
+$$\text{Score}(D, Q) = \sum_{q \in Q} \text{IDF}(q) \cdot \frac{f(q, D) \cdot (k_1 + 1)}{f(q, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
+El motor extrae además fragmentos (*snippets*) enriquecidos mediante `<mark>` para resaltado instantáneo en la interfaz de usuario.
 
 ---
 
@@ -880,6 +1015,10 @@ El motor de extracción documental procesa el texto en 3 fases:
   pandas>=2.0.0
   reportlab>=4.0.0
   openpyxl>=3.1.0
+  scikit-learn>=1.3.0
+  pypdf>=4.0.0
+  python-docx>=1.1.0
+  pdfplumber>=0.11.0
   pydantic>=2.0.0
   ```
 
