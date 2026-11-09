@@ -1,6 +1,6 @@
 """
-Sistema de Consultoría en Gobierno y Gestión de TI (COBIT 2019 + IA) - Core App
-Universidad del Quindío - Formulación de Proyectos - 8vo Semestre
+Sistema de Consultoría en Gobierno y Gestión de TI (COBIT 2019 + IA) - SmartGov COBIT
+Universidad del Quindío - Administración de Proyectos - 9no Semestre
 Punto de Entrada Principal y Router de Navegación.
 """
 
@@ -52,7 +52,7 @@ def show_login():
         st.markdown("""
         <div style="background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%); color:white; padding:28px; border-radius:14px; text-align:center; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);">
             <div style="font-size:3rem;">🏛️</div>
-            <h2 style="color:white !important; margin:10px 0 4px 0;">COBIT 2019 Core Consulting</h2>
+            <h2 style="color:white !important; margin:10px 0 4px 0;">SmartGov COBIT</h2>
             <div style="font-size:0.9rem; opacity:0.85;">Sistema de Evaluación de Madurez y Gobernanza de TI</div>
         </div>
         """, unsafe_allow_html=True)
@@ -164,7 +164,7 @@ with st.sidebar:
     st.markdown(f"""
     <div class="sidebar-brand-box">
         <div class="sidebar-brand-title">
-            <span>🏛️</span> COBIT Core
+            <span>🏛️</span> SmartGov COBIT
         </div>
         <div class="sidebar-brand-sub">Marco COBIT 2019 + IA</div>
     </div>
